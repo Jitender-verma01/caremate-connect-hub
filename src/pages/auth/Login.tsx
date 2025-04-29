@@ -1,17 +1,19 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +21,12 @@ const Login = () => {
     
     try {
       await login(email, password);
-      // Redirect is handled in AuthLayout
+      // After successful login, redirect to dashboard
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
+      toast.error("Failed to login. Please check your credentials and try again.");
+    } finally {
       setIsSubmitting(false);
     }
   };

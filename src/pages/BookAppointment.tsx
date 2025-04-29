@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,22 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Check, Calendar as CalendarIcon, Clock, DollarSign, CreditCard } from "lucide-react";
-import { format, addDays, isBefore, isAfter, isSameDay, startOfToday } from "date-fns";
-
-// Mock doctor data - in a real app, fetch this from API based on ID
-const mockDoctor = {
-  id: "1",
-  name: "Dr. Robert Chen",
-  specialty: "Cardiologist",
-  image: "https://randomuser.me/api/portraits/men/52.jpg",
-  fee: 150,
-  consultationTypes: ["Video Consultation", "In-person Visit"],
-  availableTimeSlots: {
-    morning: ["09:00", "10:00", "11:00"],
-    afternoon: ["13:00", "14:00", "15:00", "16:00"],
-    evening: ["18:00", "19:00"]
-  }
-};
+import { format, addDays, isBefore, isAfter, startOfToday } from "date-fns";
+import { useDoctor, useDoctorAvailability } from "@/hooks/useDoctors";
+import { useCreateAppointment } from "@/hooks/useAppointments";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const BookAppointment = () => {
   const { doctorId } = useParams<{ doctorId: string }>();
@@ -33,9 +22,14 @@ const BookAppointment = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [consultationType, setConsultationType] = useState("Video Consultation");
   const [reason, setReason] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
-  // In a real app, fetch doctor data based on doctorId
-  const doctor = mockDoctor;
+  const { data: doctor, isLoading: isLoadingDoctor } = useDoctor(doctorId || "");
+  const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
+  const { data: availability, isLoading: isLoadingAvailability } = useDoctorAvailability(doctorId || "", formattedDate);
+  
+  const createAppointment = useCreateAppointment();
   
   // Disable dates before today
   const today = startOfToday();
@@ -44,17 +38,31 @@ const BookAppointment = () => {
   };
   
   const handleSubmit = () => {
-    // In a real app, this would submit the booking to the API
-    console.log("Booking appointment for:", {
-      doctorId,
-      selectedDate,
-      selectedTime,
-      consultationType,
-      reason
+    if (!doctorId || !selectedDate || !selectedTime || !user) {
+      toast.error("Please complete all required fields");
+      return;
+    }
+
+    createAppointment.mutate({
+      doctorId: doctorId,
+      date: format(selectedDate, 'yyyy-MM-dd'),
+      time: selectedTime,
+      consultationType: consultationType,
+      reason: reason
+    }, {
+      onSuccess: () => {
+        navigate("/dashboard");
+      }
     });
-    
-    // Then redirect to payment or confirmation page
   };
+
+  if (isLoadingDoctor) {
+    return <div className="flex justify-center p-12">Loading doctor information...</div>;
+  }
+
+  if (!doctor) {
+    return <div className="text-center p-12">Doctor not found</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -117,25 +125,33 @@ const BookAppointment = () => {
               <CardDescription>Available time slots for {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'selected date'}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {Object.entries(doctor.availableTimeSlots).map(([period, slots]) => (
-                  <div key={period} className="space-y-2">
-                    <h3 className="font-medium capitalize">{period}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {slots.map(time => (
-                        <Button
-                          key={time}
-                          variant={selectedTime === time ? "default" : "outline"}
-                          className="w-20"
-                          onClick={() => setSelectedTime(time)}
-                        >
-                          {time}
-                        </Button>
-                      ))}
+              {isLoadingAvailability ? (
+                <div className="text-center py-4">Loading available times...</div>
+              ) : availability && Object.keys(availability).length > 0 ? (
+                <div className="space-y-4">
+                  {Object.entries(availability).map(([period, slots]) => (
+                    <div key={period} className="space-y-2">
+                      <h3 className="font-medium capitalize">{period}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {slots.map(time => (
+                          <Button
+                            key={time}
+                            variant={selectedTime === time ? "default" : "outline"}
+                            className="w-20"
+                            onClick={() => setSelectedTime(time)}
+                          >
+                            {time}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  No available slots for the selected date. Please try another date.
+                </div>
+              )}
             </CardContent>
           </Card>
           
@@ -231,11 +247,17 @@ const BookAppointment = () => {
             <CardFooter className="flex flex-col gap-4">
               <Button 
                 className="w-full" 
-                disabled={!selectedDate || !selectedTime}
+                disabled={!selectedDate || !selectedTime || createAppointment.isPending}
                 onClick={handleSubmit}
               >
-                <CreditCard className="mr-2 h-4 w-4" />
-                Proceed to Payment
+                {createAppointment.isPending ? (
+                  "Processing..."
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Proceed to Payment
+                  </>
+                )}
               </Button>
               
               <p className="text-xs text-center text-muted-foreground">

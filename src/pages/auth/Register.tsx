@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -38,9 +39,12 @@ const Register = () => {
         password,
         role,
       });
-      // Redirect is handled in AuthLayout
+      // After successful registration, redirect to dashboard
+      navigate("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
+      toast.error("Registration failed. Please try again.");
+    } finally {
       setIsSubmitting(false);
     }
   };

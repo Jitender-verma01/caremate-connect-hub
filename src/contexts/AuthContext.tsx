@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
+import { api } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -31,35 +32,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check for stored user on app load
-    const storedUser = localStorage.getItem('caremate_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem('caremate_user');
+    // Load user data from token on app initialization
+    const loadUser = async () => {
+      const token = localStorage.getItem('caremate_auth_token');
+      if (!token) {
+        setIsLoading(false);
+        return;
       }
-    }
-    setIsLoading(false);
+
+      try {
+        const userData = await api.auth.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error("Failed to load user:", error);
+        // Clear invalid token
+        localStorage.removeItem('caremate_auth_token');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUser();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In a real app, this would make an API call to authenticate
-      console.log("Logging in with:", email, password);
+      const response = await api.auth.login({ email, password });
       
-      // Mock login - replace with actual API call
-      const mockUser: User = {
-        id: '123',
-        name: 'John Doe',
-        email: email,
-        role: email.includes('doctor') ? 'doctor' : 'patient',
-      };
+      // Store the token
+      if (response.token) {
+        localStorage.setItem('caremate_auth_token', response.token);
+      }
       
-      setUser(mockUser);
-      localStorage.setItem('caremate_user', JSON.stringify(mockUser));
+      setUser(response.user);
       toast.success("Login successful!");
     } catch (error) {
       console.error("Login error:", error);
@@ -78,19 +84,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     setIsLoading(true);
     try {
-      // In a real app, this would make an API call to register
-      console.log("Registering with:", userData);
+      const response = await api.auth.register(userData);
       
-      // Mock registration - replace with actual API call
-      const mockUser: User = {
-        id: '123',
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-      };
+      // Store the token
+      if (response.token) {
+        localStorage.setItem('caremate_auth_token', response.token);
+      }
       
-      setUser(mockUser);
-      localStorage.setItem('caremate_user', JSON.stringify(mockUser));
+      setUser(response.user);
       toast.success("Registration successful!");
     } catch (error) {
       console.error("Registration error:", error);
@@ -101,10 +102,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('caremate_user');
-    toast.info("You have been logged out.");
+  const logout = async () => {
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always clear local state even if API call fails
+      localStorage.removeItem('caremate_auth_token');
+      setUser(null);
+      toast.info("You have been logged out.");
+    }
   };
 
   return (
