@@ -1,8 +1,7 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Calendar, FileText, Video, User, ChevronRight } from "lucide-react";
+import { Calendar, FileText, Video, User, ChevronRight, Search } from "lucide-react";
 
 const LandingPage = () => {
   const { isAuthenticated } = useAuth();
