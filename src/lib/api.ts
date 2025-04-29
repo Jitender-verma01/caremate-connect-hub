@@ -2,7 +2,7 @@
 import { toast } from "sonner";
 
 // Update this with your actual API URL
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://careplus-backend-220n.onrender.com/api/vi/";
 
 // Common headers for API requests
 const defaultHeaders = {
