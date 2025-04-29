@@ -1,8 +1,8 @@
 
 import { toast } from "sonner";
 
-// Update this with your actual API URL
-const API_BASE_URL = "https://careplus-backend-220n.onrender.com/api/vi/";
+// Update with your actual backend API URL
+const API_BASE_URL = "http://localhost:5000/api/v1";
 
 // Common headers for API requests
 const defaultHeaders = {
@@ -32,7 +32,7 @@ export const apiRequest = async (
   customHeaders = {}
 ) => {
   try {
-    // Get auth token from localStorage (if you implement JWT)
+    // Get auth token from localStorage
     const token = localStorage.getItem('caremate_auth_token');
     
     const headers = {
@@ -65,61 +65,96 @@ export const api = {
   // Auth endpoints
   auth: {
     login: (credentials: { email: string; password: string }) => 
-      apiRequest("/auth/login", "POST", credentials),
+      apiRequest("/user/login", "POST", credentials),
     
     register: (userData: { 
       name: string; 
       email: string; 
       password: string; 
-      role: 'patient' | 'doctor' 
-    }) => apiRequest("/auth/register", "POST", userData),
+      role: 'patient' | 'doctor';
+      phoneNumber?: number;
+    }) => apiRequest("/user/register", "POST", userData),
     
-    logout: () => apiRequest("/auth/logout", "POST"),
+    logout: () => apiRequest("/user/logout", "POST"),
     
-    getCurrentUser: () => apiRequest("/auth/me")
+    getCurrentUser: () => apiRequest("/user/current-user")
   },
   
   // Doctors endpoints
   doctors: {
-    getAll: (params?: { specialty?: string; name?: string }) => {
+    getAll: (params?: { specialization?: string; name?: string; experience?: number }) => {
       const queryParams = new URLSearchParams();
-      if (params?.specialty) queryParams.append('specialty', params.specialty);
+      if (params?.specialization) queryParams.append('specialization', params.specialization);
       if (params?.name) queryParams.append('name', params.name);
+      if (params?.experience) queryParams.append('experience', params.experience.toString());
       
       const queryString = queryParams.toString();
-      return apiRequest(`/doctors${queryString ? `?${queryString}` : ''}`);
+      return apiRequest(`/doctor/all-doctors${queryString ? `?${queryString}` : ''}`);
     },
     
-    getById: (id: string) => apiRequest(`/doctors/${id}`),
+    getById: (id: string) => apiRequest(`/doctor/profile/${id}`),
+    
+    getProfile: () => apiRequest('/doctor/profile'),
+    
+    getBySpecialization: (specialization: string) => 
+      apiRequest(`/doctor/specialization?specialization=${specialization}`),
     
     getAvailability: (id: string, date: string) => 
-      apiRequest(`/doctors/${id}/availability?date=${date}`)
+      apiRequest(`/doctor/available-slots-for-doctor/${id}?date=${date}`)
+  },
+  
+  // Patient endpoints
+  patients: {
+    createProfile: (formData: FormData) => 
+      apiRequest("/patient/create-profile", "POST", formData, { "Content-Type": undefined }),
+    
+    getProfile: () => apiRequest("/patient/profile"),
+    
+    getById: (id: string) => apiRequest(`/patient/profile/${id}`),
+    
+    updateProfile: (data: any) => apiRequest("/patient/update", "PATCH", data),
+    
+    updateProfileImage: (formData: FormData) => 
+      apiRequest("/patient/update-image", "PATCH", formData, { "Content-Type": undefined })
   },
   
   // Appointments endpoints
   appointments: {
-    getAll: () => apiRequest("/appointments"),
-    
-    getById: (id: string) => apiRequest(`/appointments/${id}`),
-    
     create: (appointmentData: {
       doctorId: string;
       date: string;
       time: string;
       consultationType: string;
       reason?: string;
-    }) => apiRequest("/appointments", "POST", appointmentData),
+    }) => apiRequest("/appointment", "POST", appointmentData),
     
-    update: (id: string, data: any) => 
-      apiRequest(`/appointments/${id}`, "PUT", data),
+    getById: (id: string) => apiRequest(`/appointment/${id}`),
     
-    cancel: (id: string) => apiRequest(`/appointments/${id}`, "DELETE")
+    getPatientAppointments: (patientId: string) => 
+      apiRequest(`/appointment/${patientId}/appointments`),
+    
+    getDoctorAppointments: (doctorId: string) => 
+      apiRequest(`/appointment/${doctorId}/appointments`),
+    
+    cancel: (id: string) => apiRequest(`/appointment/cancel/${id}`, "PATCH"),
+    
+    updateStatus: (id: string, status: string) => 
+      apiRequest(`/appointment/update/${id}`, "PATCH", { status })
   },
   
   // Prescriptions endpoints
   prescriptions: {
-    getAll: () => apiRequest("/prescriptions"),
+    create: (data: any) => apiRequest("/prescription/create-prescription", "POST", data),
     
-    getById: (id: string) => apiRequest(`/prescriptions/${id}`)
+    getById: (id: string) => apiRequest(`/prescription/get-prescription/${id}`),
+    
+    getForPatient: (patientId: string) => 
+      apiRequest(`/prescription/get-prescriptions-for-patient?patientId=${patientId}`),
+    
+    update: (id: string, data: any) => 
+      apiRequest(`/prescription/update-prescription/${id}`, "PATCH", data),
+    
+    delete: (id: string) => 
+      apiRequest(`/prescription/delete-prescription/${id}`, "DELETE")
   }
 };

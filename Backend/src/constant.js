@@ -1,3 +1,2 @@
 
-
-export const DB_NAME = "smart_healthcare_system";
+export const DB_NAME = "caremate_healthcare_system";

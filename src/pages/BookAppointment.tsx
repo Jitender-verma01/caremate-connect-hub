@@ -127,22 +127,26 @@ const BookAppointment = () => {
             <CardContent>
               {isLoadingAvailability ? (
                 <div className="text-center py-4">Loading available times...</div>
-              ) : availability && Object.keys(availability).length > 0 ? (
+              ) : availability ? (
                 <div className="space-y-4">
-                  {Object.entries(availability).map(([period, slots]) => (
-                    <div key={period} className="space-y-2">
-                      <h3 className="font-medium capitalize">{period}</h3>
+                  {/* Process available slots from the API */}
+                  {Array.isArray(availability) && availability.map((slot, index) => (
+                    <div key={index} className="space-y-2">
+                      <h3 className="font-medium capitalize">{slot.day}</h3>
                       <div className="flex flex-wrap gap-2">
-                        {slots.map(time => (
-                          <Button
-                            key={time}
-                            variant={selectedTime === time ? "default" : "outline"}
-                            className="w-20"
-                            onClick={() => setSelectedTime(time)}
-                          >
-                            {time}
-                          </Button>
-                        ))}
+                        {slot.times && Array.isArray(slot.times) && slot.times
+                          .filter(timeSlot => timeSlot.status === "available")
+                          .map((timeSlot, timeIndex) => (
+                            <Button
+                              key={timeIndex}
+                              variant={selectedTime === timeSlot.time ? "default" : "outline"}
+                              className="w-20"
+                              onClick={() => setSelectedTime(timeSlot.time)}
+                            >
+                              {timeSlot.time}
+                            </Button>
+                          ))
+                        }
                       </div>
                     </div>
                   ))}
@@ -167,15 +171,15 @@ const BookAppointment = () => {
                 onValueChange={setConsultationType}
                 className="flex flex-col space-y-3"
               >
-                {doctor.consultationTypes.map(type => (
-                  <div key={type} className="flex items-center space-x-2">
-                    <RadioGroupItem value={type} id={`type-${type}`} />
-                    <Label htmlFor={`type-${type}`} className="flex-1">{type}</Label>
-                    {type === "Video Consultation" && (
-                      <Badge variant="outline" className="ml-auto">Recommended</Badge>
-                    )}
-                  </div>
-                ))}
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Video Consultation" id="type-video" />
+                  <Label htmlFor="type-video" className="flex-1">Video Consultation</Label>
+                  <Badge variant="outline" className="ml-auto">Recommended</Badge>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="In-person Consultation" id="type-inperson" />
+                  <Label htmlFor="type-inperson" className="flex-1">In-person Consultation</Label>
+                </div>
               </RadioGroup>
             </CardContent>
           </Card>
@@ -231,7 +235,7 @@ const BookAppointment = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <div className="text-sm">Consultation Fee</div>
-                  <div className="font-medium">${doctor.fee}</div>
+                  <div className="font-medium">${doctor.fee || 0}</div>
                 </div>
                 <div className="flex justify-between">
                   <div className="text-sm">Platform Fee</div>
@@ -240,7 +244,7 @@ const BookAppointment = () => {
                 <Separator />
                 <div className="flex justify-between font-bold">
                   <div>Total</div>
-                  <div>${doctor.fee + 5}</div>
+                  <div>${(doctor.fee || 0) + 5}</div>
                 </div>
               </div>
             </CardContent>

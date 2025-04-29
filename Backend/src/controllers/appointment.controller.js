@@ -1,3 +1,4 @@
+
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Appointment } from "../models/appointment.model.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -8,22 +9,27 @@ import { getDayOfWeek } from "../utils/getdayofweek.js";
 
 
 const createAppointment = asyncHandler(async (req, res) => {
-    const { doctorId, patientId, appointmentDate, timeSlot } = req.body;
+    const { doctorId, patientId, date, time, reason } = req.body;
 
-    const dayOfWeek = getDayOfWeek(appointmentDate); // "Monday", etc.
+    if (!doctorId || !patientId || !date || !time) {
+        throw new ApiError(400, "All required fields must be provided");
+    }
 
+    const dayOfWeek = getDayOfWeek(date); // "Monday", etc.
+
+    // Find the doctor and update the time slot
     const doctor = await Doctor.findOneAndUpdate(
         { 
             _id: doctorId,
             "available_time_slots.day": dayOfWeek,
-            "available_time_slots.times.time": timeSlot,
+            "available_time_slots.times.time": time,
             "available_time_slots.times.status": "available"
         },
         { 
             $set: { "available_time_slots.$[dayElem].times.$[timeElem].status": "booked" } 
         },
         { 
-            arrayFilters: [{ "dayElem.day": dayOfWeek }, { "timeElem.time": timeSlot }],
+            arrayFilters: [{ "dayElem.day": dayOfWeek }, { "timeElem.time": time }],
             new: true 
         }
     );
@@ -32,12 +38,17 @@ const createAppointment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Selected time slot is unavailable");
     }
 
+    // Create the appointment
     const appointment = await Appointment.create({
         doctorId,
         patientId,
         roomId: uuidv4(),
-        appointmentDate,
-        timeSlot: { day: dayOfWeek, time: timeSlot },
+        appointmentDate: new Date(date),
+        timeSlot: { 
+            day: dayOfWeek, 
+            time 
+        },
+        reason: reason || "General consultation",
         status: "scheduled"
     });
 
@@ -174,4 +185,4 @@ export {
     getAllAppointmentsForDoctor,
     cancelAppointment,
     updateAppointmentStatus
-};  
+};
