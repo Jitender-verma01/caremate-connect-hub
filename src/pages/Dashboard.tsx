@@ -1,11 +1,10 @@
-
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, Star, Video, User, FileText } from "lucide-react";
+import { Calendar, Clock, Star, Video, User, FileText, Search } from "lucide-react";
 
 // Mock data
 const upcomingAppointments = [
