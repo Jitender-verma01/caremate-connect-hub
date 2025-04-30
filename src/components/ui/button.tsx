@@ -38,9 +38,9 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // Fix: Check if props.disabled is true before applying asChild
-    const isDisabled = props.disabled === true;
-    const Comp = asChild && !isDisabled ? Slot : "button"
+    // Only use Slot if asChild is true AND the button is not disabled
+    // This fixes the SlotClone error
+    const Comp = asChild && !props.disabled ? Slot : "button"
     
     return (
       <Comp
