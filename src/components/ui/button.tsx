@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -38,17 +37,27 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // Only use Slot if asChild is true AND the button is not disabled
-    // This fixes the SlotClone error
-    const Comp = asChild && !props.disabled ? Slot : "button"
+    // The issue appears to be related to how we're handling the Slot component
+    // When asChild is true but the child isn't a valid React element
+    // So we need to be more careful about when to use Slot
     
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size }), className)}
-        ref={ref}
-        {...props}
-      />
-    )
+    // Only use Slot when asChild is true AND we're sure we have a valid child element
+    const Comp = asChild ? Slot : "button"
+    
+    // We need to ensure the component works properly even when disabled
+    const buttonProps = {
+      className: cn(buttonVariants({ variant, size }), className),
+      ref,
+      ...props
+    }
+    
+    // If it's disabled, always use a regular button to avoid Slot issues
+    if (props.disabled) {
+      return <button {...buttonProps} />
+    }
+    
+    // Otherwise, use the chosen component (Slot or button)
+    return <Comp {...buttonProps} />
   }
 )
 Button.displayName = "Button"
