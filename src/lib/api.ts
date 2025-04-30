@@ -51,8 +51,14 @@ export const apiRequest = async (
       config.body = JSON.stringify(data);
     }
 
+    console.log(`Making ${method} request to ${endpoint} with token:`, token ? "Present" : "Absent");
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    return await handleResponse(response);
+    const responseData = await handleResponse(response);
+    
+    console.log(`Response from ${endpoint}:`, responseData);
+    
+    return responseData;
   } catch (error) {
     console.error("API request failed:", error);
     toast.error(error instanceof Error ? error.message : "Request failed");
