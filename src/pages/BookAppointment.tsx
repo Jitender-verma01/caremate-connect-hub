@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Calendar as CalendarIcon, Clock, DollarSign, CreditCard } from "lucide-react";
 import { format, addDays, isBefore, isAfter, startOfToday } from "date-fns";
 import { useDoctor, useDoctorAvailability } from "@/hooks/useDoctors";
-import { useCreateAppointment } from "@/hooks/useAppointments";
+import { useBookAppointment } from "@/hooks/useAppointments";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -29,7 +29,7 @@ const BookAppointment = () => {
   const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const { data: availability, isLoading: isLoadingAvailability } = useDoctorAvailability(doctorId || "", formattedDate);
   
-  const createAppointment = useCreateAppointment();
+  const bookAppointment = useBookAppointment();
   
   // Disable dates before today
   const today = startOfToday();
@@ -43,7 +43,7 @@ const BookAppointment = () => {
       return;
     }
 
-    createAppointment.mutate({
+    bookAppointment.mutate({
       doctorId: doctorId,
       date: format(selectedDate, 'yyyy-MM-dd'),
       time: selectedTime,
@@ -251,10 +251,10 @@ const BookAppointment = () => {
             <CardFooter className="flex flex-col gap-4">
               <Button 
                 className="w-full" 
-                disabled={!selectedDate || !selectedTime || createAppointment.isPending}
+                disabled={!selectedDate || !selectedTime || bookAppointment.isPending}
                 onClick={handleSubmit}
               >
-                {createAppointment.isPending ? (
+                {bookAppointment.isPending ? (
                   "Processing..."
                 ) : (
                   <>
