@@ -48,7 +48,13 @@ export const apiRequest = async (
     };
 
     if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
-      config.body = JSON.stringify(data);
+      // If data is FormData, don't stringify it
+      if (data instanceof FormData) {
+        delete headers["Content-Type"];
+        config.body = data;
+      } else {
+        config.body = JSON.stringify(data);
+      }
     }
 
     console.log(`Making ${method} request to ${endpoint} with token:`, token ? "Present" : "Absent");
@@ -83,7 +89,19 @@ export const api = {
     
     logout: () => apiRequest("/user/logout", "POST"),
     
-    getCurrentUser: () => apiRequest("/user/current-user")
+    getCurrentUser: () => apiRequest("/user/current-user"),
+
+    updateAccountDetails: (data: { 
+      name: string; 
+      email: string; 
+      phoneNumber?: number;
+    }) => apiRequest("/user/update-account-details", "PATCH", data),
+
+    changePassword: (data: {
+      oldPassword: string;
+      newPassword: string;
+      confirmPassword: string;
+    }) => apiRequest("/user/change-password", "PATCH", data)
   },
   
   // Doctors endpoints
@@ -112,7 +130,7 @@ export const api = {
   // Patient endpoints
   patients: {
     createProfile: (formData: FormData) => 
-      apiRequest("/patient/create-profile", "POST", formData, { "Content-Type": undefined }),
+      apiRequest("/patient/create-profile", "POST", formData),
     
     getProfile: () => apiRequest("/patient/profile"),
     
@@ -121,7 +139,7 @@ export const api = {
     updateProfile: (data: any) => apiRequest("/patient/update", "PATCH", data),
     
     updateProfileImage: (formData: FormData) => 
-      apiRequest("/patient/update-image", "PATCH", formData, { "Content-Type": undefined })
+      apiRequest("/patient/update-image", "PATCH", formData)
   },
   
   // Appointments endpoints

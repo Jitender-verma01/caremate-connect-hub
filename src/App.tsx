@@ -16,6 +16,7 @@ import BookAppointment from "./pages/BookAppointment";
 import VideoConsultation from "./pages/VideoConsultation";
 import Prescriptions from "./pages/Prescriptions";
 import NotFound from "./pages/NotFound";
+import ProfilePage from "./pages/ProfilePage";
 
 // Layout components
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -48,6 +49,7 @@ const App = () => (
               {/* Dashboard Routes */}
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/doctors" element={<DoctorSearch />} />
                 <Route path="/doctors/:id" element={<DoctorProfile />} />
                 <Route path="/book-appointment/:doctorId" element={<BookAppointment />} />
