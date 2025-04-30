@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -36,28 +37,38 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // The issue appears to be related to how we're handling the Slot component
-    // When asChild is true but the child isn't a valid React element
-    // So we need to be more careful about when to use Slot
-    
-    // Only use Slot when asChild is true AND we're sure we have a valid child element
-    const Comp = asChild ? Slot : "button"
-    
-    // We need to ensure the component works properly even when disabled
+  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
+    // Create a robust solution that handles all edge cases:
+    // 1. Check if the component is disabled - always use button
+    // 2. Check if asChild is true and children exists - only then use Slot
+    // 3. Default to button element in all other cases
+
+    // Prepare common props for either component
     const buttonProps = {
       className: cn(buttonVariants({ variant, size }), className),
       ref,
       ...props
     }
     
-    // If it's disabled, always use a regular button to avoid Slot issues
+    // Always use regular button for disabled state
     if (props.disabled) {
-      return <button {...buttonProps} />
+      return <button {...buttonProps}>{children}</button>
     }
     
-    // Otherwise, use the chosen component (Slot or button)
-    return <Comp {...buttonProps} />
+    // Use Slot only when asChild is true AND we have children
+    if (asChild && React.Children.count(children) > 0) {
+      // Ensure there's a single valid element child for Slot
+      try {
+        return <Slot {...buttonProps}>{children}</Slot>
+      } catch (error) {
+        // Fallback to button if Slot fails
+        console.warn("Button with asChild failed, falling back to regular button", error)
+        return <button {...buttonProps}>{children}</button>
+      }
+    }
+    
+    // Default case: use standard button
+    return <button {...buttonProps}>{children}</button>
   }
 )
 Button.displayName = "Button"
