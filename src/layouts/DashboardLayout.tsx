@@ -76,40 +76,49 @@ const DashboardLayout = () => {
           </SidebarHeader>
           <SidebarContent className="p-4">
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/dashboard" className="flex items-center space-x-3">
-                    <Layout size={20} />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/doctors" className="flex items-center space-x-3">
-                    <Search size={20} />
-                    <span>Find Doctors</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/prescriptions" className="flex items-center space-x-3">
-                    <FileText size={20} />
-                    <span>Prescriptions</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/appointments" className="flex items-center space-x-3">
-                    <Calendar size={20} />
-                    <span>Appointments</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Link to="/dashboard">
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <span className="flex items-center space-x-3">
+                      <Layout size={20} />
+                      <span>Dashboard</span>
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+              <Link to="/doctors">
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <span className="flex items-center space-x-3">
+                      <Search size={20} />
+                      <span>Find Doctors</span>
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+              <Link to="/prescriptions">
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <span className="flex items-center space-x-3">
+                      <FileText size={20} />
+                      <span>Prescriptions</span>
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+              <Link to="/appointments">
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <span className="flex items-center space-x-3">
+                      <Calendar size={20} />
+                      <span>Appointments</span>
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
             </SidebarMenu>
           </SidebarContent>
+
           <SidebarFooter className="p-4 border-t">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">

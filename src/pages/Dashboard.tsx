@@ -49,9 +49,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
 
-  // Simulate adding a notification on component mount
   useEffect(() => {
-    // Only add a welcome notification once when component loads
     addNotification({
       userId: user?.id || '',
       message: "Welcome to CareMate! Your healthcare journey starts here.",
@@ -68,53 +66,44 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="card-hover">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-            <div className="bg-care-light p-3 rounded-full mb-3">
-              <Search className="h-6 w-6 text-care-primary" />
-            </div>
-            <h3 className="font-medium">Find Doctors</h3>
-            <Button variant="link" asChild className="mt-2">
-              <Link to="/doctors">Browse Specialists</Link>
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="card-hover">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-            <div className="bg-care-light p-3 rounded-full mb-3">
-              <Calendar className="h-6 w-6 text-care-primary" />
-            </div>
-            <h3 className="font-medium">Appointments</h3>
-            <Button variant="link" asChild className="mt-2">
-              <Link to="/appointments">View Schedule</Link>
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="card-hover">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-            <div className="bg-care-light p-3 rounded-full mb-3">
-              <FileText className="h-6 w-6 text-care-primary" />
-            </div>
-            <h3 className="font-medium">Prescriptions</h3>
-            <Button variant="link" asChild className="mt-2">
-              <Link to="/prescriptions">View History</Link>
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="card-hover">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-            <div className="bg-care-light p-3 rounded-full mb-3">
-              <User className="h-6 w-6 text-care-primary" />
-            </div>
-            <h3 className="font-medium">Profile</h3>
-            <Button variant="link" asChild className="mt-2">
-              <Link to="/profile">Manage Profile</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {[
+          {
+            icon: <Search className="h-6 w-6 text-care-primary" />,
+            title: "Find Doctors",
+            to: "/doctors",
+            linkText: "Browse Specialists"
+          },
+          {
+            icon: <Calendar className="h-6 w-6 text-care-primary" />,
+            title: "Appointments",
+            to: "/appointments",
+            linkText: "View Schedule"
+          },
+          {
+            icon: <FileText className="h-6 w-6 text-care-primary" />,
+            title: "Prescriptions",
+            to: "/prescriptions",
+            linkText: "View History"
+          },
+          {
+            icon: <User className="h-6 w-6 text-care-primary" />,
+            title: "Profile",
+            to: "/profile",
+            linkText: "Manage Profile"
+          }
+        ].map((item, index) => (
+          <Card className="card-hover" key={index}>
+            <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
+              <div className="bg-care-light p-3 rounded-full mb-3">
+                {item.icon}
+              </div>
+              <h3 className="font-medium">{item.title}</h3>
+              <Button variant="link" asChild className="mt-2">
+                <Link to={item.to}>{item.linkText}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Main Content */}
@@ -227,133 +216,58 @@ const Dashboard = () => {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Doctor 1 */}
-          <Card className="card-hover">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-care-light">
-                  <img
-                    src="https://randomuser.me/api/portraits/men/52.jpg"
-                    alt="Dr. Robert Chen"
-                    className="w-full h-full object-cover"
-                  />
+          {[
+            {
+              name: "Dr. Robert Chen",
+              specialty: "Cardiologist",
+              image: "https://randomuser.me/api/portraits/men/52.jpg"
+            },
+            {
+              name: "Dr. Maria Lopez",
+              specialty: "Pediatrician",
+              image: "https://randomuser.me/api/portraits/women/45.jpg"
+            },
+            {
+              name: "Dr. Amit Patel",
+              specialty: "Orthopedic Surgeon",
+              image: "https://randomuser.me/api/portraits/men/28.jpg"
+            },
+            {
+              name: "Dr. Linda Park",
+              specialty: "Neurologist",
+              image: "https://randomuser.me/api/portraits/women/30.jpg"
+            }
+          ].map((doc, index) => (
+            <Card className="card-hover" key={index}>
+              <CardContent className="pt-6">
+                <div className="flex justify-center mb-4">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-care-light">
+                    <img
+                      src={doc.image}
+                      alt={doc.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="text-center">
-                <h3 className="font-medium text-lg">Dr. Robert Chen</h3>
-                <p className="text-sm text-muted-foreground">Cardiologist</p>
-                <div className="flex items-center justify-center mt-2 text-yellow-500">
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4" />
-                  <span className="text-sm text-muted-foreground ml-2">4.0</span>
+                <div className="text-center">
+                  <h3 className="font-medium text-lg">{doc.name}</h3>
+                  <p className="text-sm text-muted-foreground">{doc.specialty}</p>
+                  <div className="flex items-center justify-center mt-2 text-yellow-500">
+                    <Star className="w-4 h-4 fill-current" />
+                    <Star className="w-4 h-4 fill-current" />
+                    <Star className="w-4 h-4 fill-current" />
+                    <Star className="w-4 h-4 fill-current" />
+                    <Star className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button asChild>
-                <Link to="/doctors/1">View Profile</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          {/* Doctor 2 */}
-          <Card className="card-hover">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-care-light">
-                  <img
-                    src="https://randomuser.me/api/portraits/women/32.jpg"
-                    alt="Dr. Sarah Johnson"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="font-medium text-lg">Dr. Sarah Johnson</h3>
-                <p className="text-sm text-muted-foreground">Neurologist</p>
-                <div className="flex items-center justify-center mt-2 text-yellow-500">
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <span className="text-sm text-muted-foreground ml-2">5.0</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button asChild>
-                <Link to="/doctors/2">View Profile</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          {/* Doctor 3 */}
-          <Card className="card-hover">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-care-light">
-                  <img
-                    src="https://randomuser.me/api/portraits/men/32.jpg"
-                    alt="Dr. Michael Wong"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="font-medium text-lg">Dr. Michael Wong</h3>
-                <p className="text-sm text-muted-foreground">Dermatologist</p>
-                <div className="flex items-center justify-center mt-2 text-yellow-500">
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4" />
-                  <span className="text-sm text-muted-foreground ml-2">4.0</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button asChild>
-                <Link to="/doctors/3">View Profile</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          {/* Doctor 4 */}
-          <Card className="card-hover">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-care-light">
-                  <img
-                    src="https://randomuser.me/api/portraits/women/68.jpg"
-                    alt="Dr. Jessica Patel"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="font-medium text-lg">Dr. Jessica Patel</h3>
-                <p className="text-sm text-muted-foreground">Psychiatrist</p>
-                <div className="flex items-center justify-center mt-2 text-yellow-500">
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4" />
-                  <Star className="w-4 h-4" />
-                  <span className="text-sm text-muted-foreground ml-2">3.0</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button asChild>
-                <Link to="/doctors/4">View Profile</Link>
-              </Button>
-            </CardFooter>
-          </Card>
+              </CardContent>
+              <CardFooter className="flex justify-center">
+                <Button asChild>
+                  <Link to="/doctors">Book Now</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </div>
     </div>

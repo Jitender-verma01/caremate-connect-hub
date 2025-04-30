@@ -59,14 +59,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       const response = await api.auth.login({ email, password });
-      
+  
       // Store the token
-      if (response.token) {
-        localStorage.setItem('caremate_auth_token', response.token);
+      if (response.data.accessToken) {
+        localStorage.setItem('caremate_auth_token', response.data.accessToken);
       }
-      
-      setUser(response.user);
+  
+      setUser(response.data.user);
       toast.success("Login successful!");
+      
+      // ✅ Return the response
+      return response.data;
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
@@ -75,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
+  
 
   const register = async (userData: {
     name: string;
