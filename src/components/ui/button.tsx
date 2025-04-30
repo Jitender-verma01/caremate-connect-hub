@@ -37,18 +37,43 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // Fix: Check if props.disabled is true before applying asChild
-    const isDisabled = props.disabled === true;
-    const Comp = asChild && !isDisabled ? Slot : "button"
+  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
+    const buttonClassName = cn(buttonVariants({ variant, size }), className);
     
+    // SAFETY CHECK: Don't use Slot if:
+    // 1. asChild is false
+    // 2. Button is disabled
+    // 3. There are no children
+    // 4. There are multiple children
+    // 5. The child is not a valid React element
+    if (
+      !asChild || 
+      props.disabled || 
+      !children || 
+      React.Children.count(children) !== 1 || 
+      !React.isValidElement(children)
+    ) {
+      return (
+        <button 
+          className={buttonClassName}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+    
+    // At this point we're certain we can safely use Slot with exactly one React element child
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size }), className)}
+      <Slot 
+        className={buttonClassName}
         ref={ref}
         {...props}
-      />
-    )
+      >
+        {children}
+      </Slot>
+    );
   }
 )
 Button.displayName = "Button"

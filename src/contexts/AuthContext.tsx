@@ -59,17 +59,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       const response = await api.auth.login({ email, password });
-  
-      // Store the token
-      if (response.data.accessToken) {
-        localStorage.setItem('caremate_auth_token', response.data.accessToken);
-      }
-  
-      setUser(response.data.user);
-      toast.success("Login successful!");
       
-      // ✅ Return the response
-      return response.data;
+      // Handle the response structure properly
+      // The backend returns { data: { user, accessToken } }
+      if (response && response.data && response.data.accessToken) {
+        localStorage.setItem('caremate_auth_token', response.data.accessToken);
+        setUser(response.data.user);
+        toast.success("Login successful!");
+      } else {
+        // If response structure is not as expected
+        console.error("Unexpected response structure:", response);
+        toast.error("Login failed. Unexpected response format.");
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
@@ -78,7 +80,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
-  
 
   const register = async (userData: {
     name: string;
@@ -90,12 +91,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await api.auth.register(userData);
       
-      // Store the token
-      if (response.token) {
-        localStorage.setItem('caremate_auth_token', response.token);
+      // Store the token - ensure we're using the correct response structure
+      if (response.data && response.data.accessToken) {
+        localStorage.setItem('caremate_auth_token', response.data.accessToken);
+        setUser(response.data.user);
+      } else if (response.accessToken) {
+        localStorage.setItem('caremate_auth_token', response.accessToken);
+        setUser(response.user);
+      } else {
+        console.error("Unexpected registration response structure:", response);
+        toast.error("Registration succeeded but session creation failed.");
       }
       
-      setUser(response.user);
       toast.success("Registration successful!");
     } catch (error) {
       console.error("Registration error:", error);
