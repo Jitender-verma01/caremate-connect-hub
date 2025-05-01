@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 import { api } from '@/lib/api';
@@ -23,6 +24,7 @@ interface AuthContextType {
     role: 'patient' | 'doctor';
   }) => Promise<void>;
   logout: () => void;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,29 +33,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const loadUser = async () => {
+    const token = localStorage.getItem('caremate_auth_token');
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const userData = await api.auth.getCurrentUser();
+      console.log("Loaded user data:", userData);
+      setUser(userData.data);
+    } catch (error) {
+      console.error("Failed to load user:", error);
+      // Clear invalid token
+      localStorage.removeItem('caremate_auth_token');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Load user data from token on app initialization
-    const loadUser = async () => {
-      const token = localStorage.getItem('caremate_auth_token');
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const userData = await api.auth.getCurrentUser();
-        setUser(userData);
-      } catch (error) {
-        console.error("Failed to load user:", error);
-        // Clear invalid token
-        localStorage.removeItem('caremate_auth_token');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadUser();
   }, []);
+
+  const refreshUserData = async () => {
+    try {
+      setIsLoading(true);
+      await loadUser();
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -135,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         logout,
+        refreshUserData
       }}
     >
       {children}

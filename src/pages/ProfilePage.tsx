@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,34 +66,36 @@ const ProfilePage = () => {
   });
 
   // Fetch profile data based on user role
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!user) return;
-      
-      setIsLoadingProfile(true);
-      try {
-        if (user.role === "patient") {
-          try {
-            const response = await api.patients.getProfile();
-            setPatientProfile(response.data);
-          } catch (error) {
-            console.log("No patient profile found or error fetching profile");
-          }
-        } else if (user.role === "doctor") {
-          try {
-            const response = await api.doctors.getProfile();
-            setDoctorProfile(response.data);
-          } catch (error) {
-            console.log("No doctor profile found or error fetching profile");
-          }
+  const fetchProfileData = async () => {
+    if (!user) return;
+    
+    setIsLoadingProfile(true);
+    try {
+      if (user.role === "patient") {
+        try {
+          const response = await api.patients.getProfile();
+          console.log("Patient profile data:", response);
+          setPatientProfile(response.data);
+        } catch (error) {
+          console.log("No patient profile found or error fetching profile:", error);
         }
-      } catch (error) {
-        console.error("Failed to load profile data:", error);
-      } finally {
-        setIsLoadingProfile(false);
+      } else if (user.role === "doctor") {
+        try {
+          const response = await api.doctors.getProfile();
+          console.log("Doctor profile data:", response);
+          setDoctorProfile(response.data);
+        } catch (error) {
+          console.log("No doctor profile found or error fetching profile:", error);
+        }
       }
-    };
-
+    } catch (error) {
+      console.error("Failed to load profile data:", error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+  
+  useEffect(() => {
     if (user) {
       // Update form values when user data is loaded
       profileForm.reset({
@@ -114,6 +117,13 @@ const ProfilePage = () => {
         phoneNumber: data.phoneNumber ? parseInt(data.phoneNumber) : undefined,
       });
       toast.success("Account details updated successfully!");
+      
+      // Refresh user data after update
+      if (user?.role === "patient") {
+        fetchProfileData();
+      } else if (user?.role === "doctor") {
+        fetchProfileData();
+      }
     } catch (error) {
       console.error("Failed to update profile:", error);
       toast.error("Failed to update account details. Please try again.");
@@ -148,15 +158,7 @@ const ProfilePage = () => {
     setCreateProfileOpen(false);
     toast.success("Profile created successfully! Refreshing data...");
     // Refresh profile data
-    if (user?.role === "patient") {
-      api.patients.getProfile().then((response) => {
-        setPatientProfile(response.data);
-      });
-    } else if (user?.role === "doctor") {
-      api.doctors.getProfile().then((response) => {
-        setDoctorProfile(response.data);
-      });
-    }
+    fetchProfileData();
   };
 
   if (isLoading) {
@@ -173,11 +175,21 @@ const ProfilePage = () => {
     return date.toLocaleDateString();
   };
 
+  console.log("Current user:", user);
+  console.log("Patient profile:", patientProfile);
+  console.log("Doctor profile:", doctorProfile);
+
   return (
     <div className="container max-w-4xl py-6 space-y-8">
       <div className="flex items-center space-x-4">
         <Avatar className="h-16 w-16 border-2 border-primary">
-          <AvatarImage src={patientProfile?.profileImage || doctorProfile?.profileImage} />
+          <AvatarImage 
+            src={
+              user?.role === "patient" 
+                ? patientProfile?.profileImage 
+                : doctorProfile?.profileImage
+            } 
+          />
           <AvatarFallback className="bg-primary text-primary-foreground text-xl">
             {user?.name?.charAt(0).toUpperCase()}
           </AvatarFallback>
@@ -331,7 +343,8 @@ const ProfilePage = () => {
             patientProfile ? (
               <PatientProfileSection 
                 patient={patientProfile} 
-                isLoading={isLoadingProfile} 
+                isLoading={isLoadingProfile}
+                onUpdate={fetchProfileData}
               />
             ) : (
               <Card>
@@ -354,7 +367,8 @@ const ProfilePage = () => {
             doctorProfile ? (
               <DoctorProfileSection 
                 doctor={doctorProfile} 
-                isLoading={isLoadingProfile} 
+                isLoading={isLoadingProfile}
+                onUpdate={fetchProfileData}
               />
             ) : (
               <Card>
@@ -399,7 +413,7 @@ const ProfilePage = () => {
 };
 
 // Patient Profile Section Component
-const PatientProfileSection = ({ patient, isLoading }: { patient: any; isLoading: boolean }) => {
+const PatientProfileSection = ({ patient, isLoading, onUpdate }: { patient: any; isLoading: boolean; onUpdate?: () => void }) => {
   if (isLoading) {
     return (
       <Card>
@@ -469,7 +483,13 @@ const PatientProfileSection = ({ patient, isLoading }: { patient: any; isLoading
                 Make changes to your medical profile information.
               </DialogDescription>
             </DialogHeader>
-            <PatientProfileForm existingProfile={patient} onSuccess={() => window.location.reload()} />
+            <PatientProfileForm 
+              existingProfile={patient} 
+              onSuccess={() => {
+                if (onUpdate) onUpdate();
+                toast.success("Profile updated successfully!");
+              }} 
+            />
           </DialogContent>
         </Dialog>
       </CardFooter>
@@ -478,7 +498,7 @@ const PatientProfileSection = ({ patient, isLoading }: { patient: any; isLoading
 };
 
 // Doctor Profile Section Component
-const DoctorProfileSection = ({ doctor, isLoading }: { doctor: any; isLoading: boolean }) => {
+const DoctorProfileSection = ({ doctor, isLoading, onUpdate }: { doctor: any; isLoading: boolean; onUpdate?: () => void }) => {
   if (isLoading) {
     return (
       <Card>
@@ -540,7 +560,13 @@ const DoctorProfileSection = ({ doctor, isLoading }: { doctor: any; isLoading: b
                   Make changes to your professional information.
                 </DialogDescription>
               </DialogHeader>
-              <DoctorProfileForm existingProfile={doctor} onSuccess={() => window.location.reload()} />
+              <DoctorProfileForm 
+                existingProfile={doctor} 
+                onSuccess={() => {
+                  if (onUpdate) onUpdate();
+                  toast.success("Profile updated successfully!");
+                }} 
+              />
             </DialogContent>
           </Dialog>
         </CardFooter>

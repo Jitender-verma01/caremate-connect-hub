@@ -49,6 +49,8 @@ export function DoctorProfileForm({
     existingProfile?.profileImage || null
   );
 
+  console.log("Existing doctor profile for form:", existingProfile);
+
   const form = useForm<DoctorProfileFormValues>({
     resolver: zodResolver(doctorProfileSchema),
     defaultValues: {
@@ -63,36 +65,43 @@ export function DoctorProfileForm({
     setIsSubmitting(true);
 
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      if (data.profileImage) {
-        formData.append("profileImage", data.profileImage);
-      }
-      formData.append("specialization", data.specialization);
-      formData.append("fees", data.fees);
-      formData.append("qualification", data.qualification);
-      formData.append("experience", data.experience);
-
+      console.log("Submitting doctor profile data:", data);
+      
       if (existingProfile) {
         // Update existing profile
-        await api.doctors.updateDoctorProfile({
+        const updateResponse = await api.doctors.updateDoctorProfile({
           specialization: data.specialization,
           fees: Number(data.fees),
           qualification: data.qualification,
           experience: Number(data.experience),
         });
+        
+        console.log("Profile update response:", updateResponse);
 
         // If there's a new profile image, update it separately
         if (data.profileImage) {
           const imageFormData = new FormData();
           imageFormData.append("profileImage", data.profileImage);
-          await api.doctors.updateProfileImage(imageFormData);
+          const imageResponse = await api.doctors.updateProfileImage(imageFormData);
+          console.log("Image update response:", imageResponse);
         }
 
         toast.success("Doctor profile updated successfully!");
       } else {
         // Create new profile
-        await api.doctors.createDoctor(formData);
+        // Create FormData for file upload
+        const formData = new FormData();
+        if (data.profileImage) {
+          formData.append("profileImage", data.profileImage);
+        }
+        formData.append("specialization", data.specialization);
+        formData.append("fees", data.fees);
+        formData.append("qualification", data.qualification);
+        formData.append("experience", data.experience);
+        
+        const createResponse = await api.doctors.createDoctor(formData);
+        console.log("Profile creation response:", createResponse);
+        
         toast.success("Doctor profile created successfully!");
       }
 
