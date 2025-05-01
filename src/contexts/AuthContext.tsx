@@ -1,7 +1,7 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 import { api } from '@/lib/api';
+import { setupSocketAuth } from '@/lib/socket';
 
 export interface User {
   id: string;
@@ -41,6 +41,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      // Setup socket auth with token
+      setupSocketAuth(token);
+      
       const userData = await api.auth.getCurrentUser();
       console.log("Loaded user data:", userData);
       setUser(userData.data);
@@ -48,6 +51,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to load user:", error);
       // Clear invalid token
       localStorage.removeItem('caremate_auth_token');
+      // Remove auth from socket
+      setupSocketAuth(null);
     } finally {
       setIsLoading(false);
     }
@@ -75,13 +80,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await api.auth.login({ email, password });
       
       // Handle the response structure properly
-      // The backend returns { data: { user, accessToken } }
       if (response && response.data && response.data.accessToken) {
         localStorage.setItem('caremate_auth_token', response.data.accessToken);
         setUser(response.data.user);
+        
+        // Setup socket auth with new token
+        setupSocketAuth(response.data.accessToken);
+        
         toast.success("Login successful!");
       } else {
-        // If response structure is not as expected
         console.error("Unexpected response structure:", response);
         toast.error("Login failed. Unexpected response format.");
         throw new Error("Invalid response format");
@@ -109,9 +116,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.data && response.data.accessToken) {
         localStorage.setItem('caremate_auth_token', response.data.accessToken);
         setUser(response.data.user);
+        
+        // Setup socket auth with new token
+        setupSocketAuth(response.data.accessToken);
       } else if (response.accessToken) {
         localStorage.setItem('caremate_auth_token', response.accessToken);
         setUser(response.user);
+        
+        // Setup socket auth with new token
+        setupSocketAuth(response.accessToken);
       } else {
         console.error("Unexpected registration response structure:", response);
         toast.error("Registration succeeded but session creation failed.");
@@ -136,6 +149,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Always clear local state even if API call fails
       localStorage.removeItem('caremate_auth_token');
       setUser(null);
+      
+      // Reset socket auth
+      setupSocketAuth(null);
+      
       toast.info("You have been logged out.");
     }
   };

@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,19 +10,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Check, Calendar as CalendarIcon, Clock, DollarSign, CreditCard } from "lucide-react";
-import { format, addDays, isBefore, isAfter, startOfToday } from "date-fns";
+import { format, addDays, isBefore, isAfter, startOfToday, parse } from "date-fns";
 import { useDoctor, useDoctorAvailability } from "@/hooks/useDoctors";
 import { useBookAppointment } from "@/hooks/useAppointments";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const BookAppointment = () => {
   const { doctorId } = useParams<{ doctorId: string }>();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get('date');
+  
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : addDays(new Date(), 1)
+  );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [consultationType, setConsultationType] = useState("Video Consultation");
   const [reason, setReason] = useState("");
   const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const navigate = useNavigate();
   
   const { data: doctor, isLoading: isLoadingDoctor } = useDoctor(doctorId || "");
@@ -50,7 +57,14 @@ const BookAppointment = () => {
       consultationType: consultationType,
       reason: reason
     }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        // Create notification for booking success
+        addNotification({
+          userId: user.id,
+          message: `Appointment booked successfully with Dr. ${doctor?.name} on ${format(selectedDate, 'MMMM d')} at ${selectedTime}`,
+          type: "appointment"
+        });
+        
         navigate("/dashboard");
       }
     });
