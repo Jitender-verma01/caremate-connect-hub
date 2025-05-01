@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 import { api } from '@/lib/api';
@@ -9,6 +8,7 @@ export interface User {
   email: string;
   role: 'patient' | 'doctor';
   profileImage?: string;
+  phoneNumber?: number;
 }
 
 interface AuthContextType {

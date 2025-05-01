@@ -1,10 +1,11 @@
+
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, Star, Video, User, FileText, Search } from "lucide-react";
+import { Calendar, Clock, Star, Video, User, FileText, Search, Users, Stethoscope, Pill, Activity } from "lucide-react";
 
 // Mock data
 const upcomingAppointments = [
@@ -45,6 +46,28 @@ const recentPrescriptions = [
   },
 ];
 
+// Mock data for doctor dashboard
+const upcomingPatients = [
+  {
+    id: "patient-1",
+    name: "John Smith",
+    age: 45,
+    time: "10:30 AM",
+    date: "2025-05-03",
+    reason: "Chest pain",
+    status: "confirmed",
+  },
+  {
+    id: "patient-2",
+    name: "Emily Johnson",
+    age: 32,
+    time: "11:30 AM",
+    date: "2025-05-03",
+    reason: "Follow-up consultation",
+    status: "confirmed",
+  }
+];
+
 const Dashboard = () => {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
@@ -57,6 +80,17 @@ const Dashboard = () => {
     });
   }, []);
 
+  // Render different dashboard based on user role
+  if (user?.role === "doctor") {
+    return <DoctorDashboard user={user} />;
+  }
+
+  // Default to patient dashboard
+  return <PatientDashboard user={user} />;
+};
+
+// Patient Dashboard Component
+const PatientDashboard = ({ user }: { user: any }) => {
   return (
     <div className="space-y-8">
       <div>
@@ -269,6 +303,226 @@ const Dashboard = () => {
             </Card>
           ))}
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Doctor Dashboard Component
+const DoctorDashboard = ({ user }: { user: any }) => {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Welcome, Dr. {user?.name}</h1>
+        <p className="text-muted-foreground">Here's an overview of your practice today</p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          {
+            icon: <Calendar className="h-6 w-6 text-blue-500" />,
+            title: "Today's Appointments",
+            value: "5",
+            change: "+2 from yesterday",
+            color: "blue"
+          },
+          {
+            icon: <Users className="h-6 w-6 text-green-500" />,
+            title: "Total Patients",
+            value: "127",
+            change: "+3 this week",
+            color: "green"
+          },
+          {
+            icon: <FileText className="h-6 w-6 text-amber-500" />,
+            title: "Prescriptions",
+            value: "38",
+            change: "+7 this month",
+            color: "amber"
+          },
+          {
+            icon: <Pill className="h-6 w-6 text-purple-500" />,
+            title: "Consultations",
+            value: "152",
+            change: "+12 this month",
+            color: "purple"
+          },
+        ].map((stat, index) => (
+          <Card key={index}>
+            <CardContent className="p-6">
+              <div className={`w-12 h-12 rounded-full bg-${stat.color}-100 flex items-center justify-center mb-4`}>
+                {stat.icon}
+              </div>
+              <h3 className="text-2xl font-bold">{stat.value}</h3>
+              <p className="text-sm font-medium">{stat.title}</p>
+              <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Today's Appointments */}
+        <Card className="col-span-1 lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Today's Appointments</CardTitle>
+              <CardDescription>Your scheduled patients</CardDescription>
+            </div>
+            <Button variant="outline" asChild size="sm">
+              <Link to="/appointments">View All</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {upcomingPatients.map((patient) => (
+              <div key={patient.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                <div>
+                  <h4 className="font-medium">{patient.name}</h4>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <span className="mr-2">Age: {patient.age}</span>
+                    <span>Reason: {patient.reason}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center text-sm text-muted-foreground mb-1">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {patient.time}
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button asChild size="sm">
+                    <Link to={`/consultation/${patient.id}`}>
+                      <Video className="w-4 h-4 mr-2" />
+                      Start
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/patient/${patient.id}`}>View</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Activity Summary */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Activity className="h-5 w-5 text-primary" />
+              <CardTitle>Activity Summary</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Consultation Rate</span>
+                <span className="text-sm font-bold">88%</span>
+              </div>
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div className="bg-green-500 h-full rounded-full" style={{ width: '88%' }}></div>
+              </div>
+              
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-sm font-medium">Patient Satisfaction</span>
+                <span className="text-sm font-bold">92%</span>
+              </div>
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div className="bg-blue-500 h-full rounded-full" style={{ width: '92%' }}></div>
+              </div>
+              
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-sm font-medium">Appointment Completion</span>
+                <span className="text-sm font-bold">95%</span>
+              </div>
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div className="bg-purple-500 h-full rounded-full" style={{ width: '95%' }}></div>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/statistics">View Detailed Statistics</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      {/* Recent Patients & Schedule Management */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-primary" />
+              <CardTitle>Recent Patients</CardTitle>
+            </div>
+            <CardDescription>Your recently treated patients</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { name: "Sarah Johnson", date: "Apr 30, 2025", condition: "Hypertension" },
+                { name: "Thomas Lee", date: "Apr 28, 2025", condition: "Diabetes Check" },
+                { name: "Maria Garcia", date: "Apr 27, 2025", condition: "Annual Physical" },
+              ].map((patient, index) => (
+                <div key={index} className="flex items-center justify-between border-b pb-2 last:border-0">
+                  <div>
+                    <h4 className="font-medium">{patient.name}</h4>
+                    <p className="text-sm text-muted-foreground">{patient.condition}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">{patient.date}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/patients">View All Patients</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              <CardTitle>Schedule Management</CardTitle>
+            </div>
+            <CardDescription>Manage your availability</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(day => (
+                <div key={day} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm font-medium">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Morning Hours</span>
+                <span className="text-sm text-muted-foreground">9:00 AM - 12:00 PM</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Afternoon Hours</span>
+                <span className="text-sm text-muted-foreground">2:00 PM - 6:00 PM</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Consultation Duration</span>
+                <span className="text-sm text-muted-foreground">30 minutes</span>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" asChild>
+              <Link to="/profile">Update Availability</Link>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
