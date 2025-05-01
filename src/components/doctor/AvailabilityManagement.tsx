@@ -51,14 +51,25 @@ export function AvailabilityManagement() {
   }, [doctorProfile]);
 
   const updateAvailability = useMutation({
-    mutationFn: (data: any) => {
-      return api.doctors.updateAvailability(doctorProfile._id, { available_time_slots: data });
+    mutationFn: () => {
+      if (!doctorProfile?._id) {
+        throw new Error("Doctor profile not found");
+      }
+      
+      console.log("Sending update with doctor ID:", doctorProfile._id);
+      console.log("Sending data:", availabilityData);
+      
+      // Use the correct API endpoint with the doctor ID parameter
+      return api.doctors.updateAvailability(doctorProfile._id, { 
+        available_time_slots: availabilityData 
+      });
     },
     onSuccess: () => {
       toast.success('Availability updated successfully');
       queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
     },
     onError: (error) => {
+      console.error("Error updating availability:", error);
       toast.error(`Failed to update availability: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
@@ -71,7 +82,7 @@ export function AvailabilityManagement() {
   };
 
   const saveAvailability = () => {
-    updateAvailability.mutate(availabilityData);
+    updateAvailability.mutate();
   };
 
   if (isLoading) {

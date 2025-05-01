@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -499,6 +498,8 @@ const PatientProfileSection = ({ patient, isLoading, onUpdate }: { patient: any;
 
 // Doctor Profile Section Component
 const DoctorProfileSection = ({ doctor, isLoading, onUpdate }: { doctor: any; isLoading: boolean; onUpdate?: () => void }) => {
+  const [showAvailability, setShowAvailability] = useState(false);
+
   if (isLoading) {
     return (
       <Card>
@@ -581,32 +582,40 @@ const DoctorProfileSection = ({ doctor, isLoading, onUpdate }: { doctor: any; is
           <CardDescription>Manage your consultation slots</CardDescription>
         </CardHeader>
         <CardContent>
-          {doctor.available_time_slots && doctor.available_time_slots.length > 0 ? (
-            <div className="space-y-4">
-              {doctor.available_time_slots.map((slot: any, index: number) => (
-                <div key={index} className="border rounded-md p-4">
-                  <h3 className="font-medium mb-2">{slot.day}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {slot.times.map((time: any, timeIndex: number) => (
-                      <span 
-                        key={timeIndex} 
-                        className={`px-3 py-1 text-sm rounded-full ${
-                          time.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {time.time} ({time.status})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+          {showAvailability ? (
+            <AvailabilityManagement />
           ) : (
-            <p className="text-center text-muted-foreground py-4">No availability slots set up yet.</p>
+            <>
+              {doctor.available_time_slots && doctor.available_time_slots.length > 0 ? (
+                <div className="space-y-4">
+                  {doctor.available_time_slots.map((slot: any, index: number) => (
+                    <div key={index} className="border rounded-md p-4">
+                      <h3 className="font-medium mb-2">{slot.day}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {slot.times.map((time: any, timeIndex: number) => (
+                          <span 
+                            key={timeIndex} 
+                            className={`px-3 py-1 text-sm rounded-full ${
+                              time.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {time.time} ({time.status})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No availability slots set up yet.</p>
+              )}
+            </>
           )}
         </CardContent>
         <CardFooter>
-          <Button variant="outline">Manage Availability</Button>
+          <Button variant="outline" onClick={() => setShowAvailability(!showAvailability)}>
+            {showAvailability ? "Hide Availability Manager" : "Manage Availability"}
+          </Button>
         </CardFooter>
       </Card>
 

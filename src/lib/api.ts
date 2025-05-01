@@ -58,6 +58,9 @@ export const apiRequest = async (
     }
 
     console.log(`Making ${method} request to ${endpoint} with token:`, token ? "Present" : "Absent");
+    if (data) {
+      console.log("Request data:", data);
+    }
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     const responseData = await handleResponse(response);
