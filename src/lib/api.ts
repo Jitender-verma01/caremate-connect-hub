@@ -124,7 +124,33 @@ export const api = {
       apiRequest(`/doctor/specialization?specialization=${specialization}`),
     
     getAvailability: (id: string, date: string) => 
-      apiRequest(`/doctor/available-slots-for-doctor/${id}?date=${date}`)
+      apiRequest(`/doctor/available-slots-for-doctor/${id}?date=${date}`),
+    
+    createDoctor: (formData: FormData) => 
+      apiRequest("/doctor/create", "POST", formData),
+    
+    updateDoctorProfile: (data: {
+      specialization: string;
+      fees: number;
+      qualification: string;
+      experience: number;
+    }) => apiRequest("/doctor/update", "PATCH", data),
+    
+    updateProfileImage: (formData: FormData) => 
+      apiRequest("/doctor/update-profile-image", "PATCH", formData),
+    
+    updateAvailability: (doctorId: string, data: {
+      available_time_slots: Array<{
+        day: string;
+        times: Array<{
+          time: string;
+          status: "available" | "booked";
+        }>;
+      }>;
+    }) => apiRequest(`/doctor/time-slots/${doctorId}`, "PATCH", data),
+    
+    toggleStatus: (doctorId: string, status: 'active' | 'inactive') => 
+      apiRequest(`/doctor/toggle-status/${doctorId}`, "PATCH", { status })
   },
   
   // Patient endpoints
@@ -139,7 +165,9 @@ export const api = {
     updateProfile: (data: any) => apiRequest("/patient/update", "PATCH", data),
     
     updateProfileImage: (formData: FormData) => 
-      apiRequest("/patient/update-image", "PATCH", formData)
+      apiRequest("/patient/update-image", "PATCH", formData),
+    
+    deleteProfile: () => apiRequest("/patient/delete-profile", "DELETE")
   },
   
   // Appointments endpoints

@@ -51,6 +51,8 @@ export function PatientProfileForm({
     existingProfile?.profileImage || null
   );
 
+  console.log("Existing patient profile for form:", existingProfile);
+
   const form = useForm<PatientProfileFormValues>({
     resolver: zodResolver(patientProfileSchema),
     defaultValues: {
@@ -69,21 +71,11 @@ export function PatientProfileForm({
     setIsSubmitting(true);
 
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      if (data.profileImage) {
-        formData.append("profileImage", data.profileImage);
-      }
-      formData.append("date_of_birth", data.date_of_birth);
-      formData.append("gender", data.gender);
-      formData.append("address", data.address || "");
-      formData.append("blood_group", data.blood_group);
-      formData.append("About", data.About || "");
-      formData.append("emergency_contact", data.emergency_contact || "");
-
+      console.log("Submitting patient profile data:", data);
+      
       if (existingProfile) {
         // Update existing profile
-        await api.patients.updateProfile({
+        const updateResponse = await api.patients.updateProfile({
           date_of_birth: data.date_of_birth,
           gender: data.gender,
           address: data.address,
@@ -91,6 +83,8 @@ export function PatientProfileForm({
           About: data.About,
           emergency_contact: data.emergency_contact,
         });
+        
+        console.log("Profile update response:", updateResponse);
 
         // If there's a new profile image, update it separately
         if (data.profileImage) {
@@ -102,7 +96,21 @@ export function PatientProfileForm({
         toast.success("Patient profile updated successfully!");
       } else {
         // Create new profile
-        await api.patients.createProfile(formData);
+        // Create FormData for file upload
+        const formData = new FormData();
+        if (data.profileImage) {
+          formData.append("profileImage", data.profileImage);
+        }
+        formData.append("date_of_birth", data.date_of_birth);
+        formData.append("gender", data.gender);
+        formData.append("address", data.address || "");
+        formData.append("blood_group", data.blood_group);
+        formData.append("About", data.About || "");
+        formData.append("emergency_contact", data.emergency_contact || "");
+        
+        const createResponse = await api.patients.createProfile(formData);
+        console.log("Profile creation response:", createResponse);
+        
         toast.success("Patient profile created successfully!");
       }
 
