@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientProfileForm } from "@/components/PatientProfileForm";
 import { DoctorProfileForm } from "@/components/DoctorProfileForm";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AvailabilityManagement } from "@/components/doctor/AvailabilityManagement";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
