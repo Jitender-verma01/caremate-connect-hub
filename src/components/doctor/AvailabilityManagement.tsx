@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,10 +31,14 @@ export function AvailabilityManagement() {
     queryFn: async () => {
       const response = await api.doctors.getProfile();
       return response.data;
-    },
-    onSuccess: (data) => {
-      if (data?.available_time_slots?.length) {
-        setAvailabilityData(data.available_time_slots);
+    }
+  });
+
+  // Initialize availabilityData whenever doctorProfile changes
+  useEffect(() => {
+    if (doctorProfile) {
+      if (doctorProfile?.available_time_slots?.length) {
+        setAvailabilityData(doctorProfile.available_time_slots);
       } else {
         // Initialize with default structure if no slots exist
         const initialData = DAYS_OF_WEEK.map(day => ({
@@ -44,7 +48,7 @@ export function AvailabilityManagement() {
         setAvailabilityData(initialData);
       }
     }
-  });
+  }, [doctorProfile]);
 
   const updateAvailability = useMutation({
     mutationFn: (data: any) => {
