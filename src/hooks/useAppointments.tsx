@@ -1,4 +1,3 @@
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -35,18 +34,32 @@ interface BookAppointmentParams {
 
 // Get appointments for the current user (patient)
 export const usePatientAppointments = () => {
-  return useQuery({
-    queryKey: ["appointments", "patient"],
+  // First, get the patient profile to get the ID
+  const patientProfileQuery = useQuery({
+    queryKey: ["patientProfile"],
     queryFn: async () => {
       try {
-        // Get patient profile to get patient ID
-        const patientResponse = await api.patients.getProfile();
-        
-        if (!patientResponse?.data?._id) {
-          throw new Error("Patient profile not found");
+        const response = await api.patients.getProfile();
+        return response?.data;
+      } catch (error) {
+        console.error("Error fetching patient profile:", error);
+        throw error;
+      }
+    },
+  });
+
+  // Then use that ID to fetch appointments
+  return useQuery({
+    queryKey: ["appointments", "patient", patientProfileQuery.data?._id],
+    queryFn: async () => {
+      try {
+        // Check if we have the patient ID
+        if (!patientProfileQuery.data?._id) {
+          throw new Error("Patient profile not loaded yet");
         }
         
-        const patientId = patientResponse.data._id;
+        const patientId = patientProfileQuery.data._id;
+        console.log("Using patient ID for appointments:", patientId);
         
         // Now get appointments with patient ID
         const response = await api.appointments.getPatientAppointments(patientId);
@@ -79,6 +92,8 @@ export const usePatientAppointments = () => {
         throw error;
       }
     },
+    // Only run this query when we have the patient ID
+    enabled: !!patientProfileQuery.data?._id,
     retry: 1,
     staleTime: 30000, // 30 seconds
   });

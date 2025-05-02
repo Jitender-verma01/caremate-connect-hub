@@ -69,7 +69,6 @@ export const apiRequest = async (
     return responseData;
   } catch (error) {
     console.error("API request failed:", error);
-    toast.error(error instanceof Error ? error.message : "Request failed");
     throw error;
   }
 };

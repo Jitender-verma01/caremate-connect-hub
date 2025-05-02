@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -68,17 +67,23 @@ export const useDoctors = (searchParams?: { specialization?: string; name?: stri
       try {
         // Use proper API params format
         const queryParams: any = {};
+        
+        // Only add specialization if it's defined and not 'all'
         if (searchParams?.specialization && searchParams.specialization !== 'all') {
           queryParams.specialization = searchParams.specialization;
         }
+        
         if (searchParams?.name) {
           queryParams.name = searchParams.name;
         }
+        
         if (searchParams?.experience) {
           queryParams.experience = searchParams.experience;
         }
         
+        console.log("Fetching doctors with params:", queryParams);
         const data = await api.doctors.getAll(queryParams);
+        console.log("Received doctor data:", data);
         
         // Handle different response formats from backend
         if (data?.data) {
@@ -101,8 +106,8 @@ export const useDoctors = (searchParams?: { specialization?: string; name?: stri
         return [];
       } catch (error) {
         console.error("Error fetching doctors:", error);
-        // Do not use mock data, return empty array instead
-        return [];
+        toast.error("Failed to load doctors. Please try again.");
+        throw error;
       }
     },
     staleTime: 60000, // 1 minute

@@ -41,7 +41,7 @@ const SPECIALIZATIONS = [
 
 export function FindDoctorByAvailability() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [specialization, setSpecialization] = useState<string | undefined>('all');
+  const [specialization, setSpecialization] = useState<string>("all");
   const navigate = useNavigate();
   
   const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
@@ -91,7 +91,7 @@ export function FindDoctorByAvailability() {
           <div>
             <h3 className="text-sm font-medium mb-2">Filter by Specialty</h3>
             <Select 
-              value={specialization || 'all'} 
+              value={specialization} 
               onValueChange={handleSpecializationChange}
             >
               <SelectTrigger>
