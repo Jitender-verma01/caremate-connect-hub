@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const TIME_SLOTS = [
@@ -24,6 +26,7 @@ export function AvailabilityManagement() {
     day: string;
     times: Array<{ time: string; status: 'available' | 'booked' }>;
   }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch doctor profile data including existing availability
   const { data: doctorProfile, isLoading } = useQuery({
@@ -50,7 +53,7 @@ export function AvailabilityManagement() {
     }
   }, [doctorProfile]);
 
-  // Fix the mutation to use the correct time_slots endpoint with doctorId
+  // Updated mutation to just use time_slots endpoint without doctorId
   const updateAvailability = useMutation({
     mutationFn: () => {
       if (!doctorProfile?._id) {
@@ -67,9 +70,11 @@ export function AvailabilityManagement() {
     onSuccess: () => {
       toast.success('Availability updated successfully');
       queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
+      setError(null);
     },
     onError: (error) => {
       console.error("Error updating availability:", error);
+      setError(error instanceof Error ? error.message : 'Unknown error updating availability');
       toast.error(`Failed to update availability: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
@@ -86,7 +91,12 @@ export function AvailabilityManagement() {
   };
 
   if (isLoading) {
-    return <div>Loading availability settings...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading availability settings...</span>
+      </div>
+    );
   }
 
   return (
@@ -95,6 +105,15 @@ export function AvailabilityManagement() {
         <CardTitle>Manage Availability</CardTitle>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}. Make sure you have the correct permissions.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs defaultValue={DAYS_OF_WEEK[0]}>
           <TabsList className="mb-4 w-full overflow-x-auto">
             {DAYS_OF_WEEK.map((day) => (
@@ -133,7 +152,12 @@ export function AvailabilityManagement() {
             disabled={updateAvailability.isPending}
             className="w-full"
           >
-            {updateAvailability.isPending ? 'Saving...' : 'Save Availability'}
+            {updateAvailability.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                Saving...
+              </>
+            ) : 'Save Availability'}
           </Button>
         </div>
       </CardContent>

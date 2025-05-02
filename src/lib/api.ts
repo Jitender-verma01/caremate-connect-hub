@@ -143,6 +143,7 @@ export const api = {
       apiRequest("/doctor/update-profile-image", "PATCH", formData),
     
     // Fix the updateAvailability method to match the backend route
+    // The correct route is /doctor/time-slots without a doctorId parameter
     updateAvailability: (doctorId: string, data: {
       available_time_slots: Array<{
         day: string;
@@ -151,7 +152,7 @@ export const api = {
           status: "available" | "booked";
         }>;
       }>;
-    }) => apiRequest(`/doctor/time-slots/${doctorId}`, "PATCH", data),
+    }) => apiRequest(`/doctor/time-slots`, "PATCH", data),
     
     toggleStatus: (doctorId: string, status: 'active' | 'inactive') => 
       apiRequest(`/doctor/toggle-status/${doctorId}`, "PATCH", { status })
