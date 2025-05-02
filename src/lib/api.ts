@@ -2,7 +2,7 @@
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
-const API_BASE_URL = "https://caremate-connect-hub.onrender.com/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 // Common headers for API requests
 const defaultHeaders = {
@@ -143,7 +143,6 @@ export const api = {
       apiRequest("/doctor/update-profile-image", "PATCH", formData),
     
     // Fix the updateAvailability method to match the backend route
-    // The correct route is /doctor/time-slots without a doctorId parameter
     updateAvailability: (doctorId: string, data: {
       available_time_slots: Array<{
         day: string;
@@ -152,7 +151,7 @@ export const api = {
           status: "available" | "booked";
         }>;
       }>;
-    }) => apiRequest(`/doctor/time-slots`, "PATCH", data),
+    }) => apiRequest(`/doctor/time-slots/${doctorId}`, "PATCH", data),
     
     toggleStatus: (doctorId: string, status: 'active' | 'inactive') => 
       apiRequest(`/doctor/toggle-status/${doctorId}`, "PATCH", { status })
