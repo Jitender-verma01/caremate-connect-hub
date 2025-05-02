@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { usePatientAppointments, useCancelAppointment } from '@/hooks/useAppointments';
@@ -26,18 +26,61 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from '@/contexts/AuthContext';
 
 export function MyAppointments() {
-  const { data, isLoading, error } = usePatientAppointments();
+  const { data, isLoading, error, refetch } = usePatientAppointments();
   const cancelAppointment = useCancelAppointment();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Attempt to refetch if the user is logged in but we got an error
+  useEffect(() => {
+    if (error && user) {
+      // Wait a moment before retrying to give the patient profile time to load
+      const timer = setTimeout(() => {
+        refetch();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, user, refetch]);
   
   if (isLoading) {
-    return <div>Loading your appointments...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>My Appointments</CardTitle>
+        </CardHeader>
+        <CardContent className="py-8 text-center">
+          <Clock className="mx-auto h-10 w-10 text-muted-foreground animate-pulse mb-2" />
+          <p>Loading your appointments...</p>
+        </CardContent>
+      </Card>
+    );
   }
   
   if (error) {
-    return <div>Error loading appointments: {error.message}</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>My Appointments</CardTitle>
+        </CardHeader>
+        <CardContent className="py-8 text-center">
+          <AlertCircle className="mx-auto h-10 w-10 text-destructive mb-2" />
+          <p className="text-muted-foreground mb-4">
+            {error instanceof Error 
+              ? error.message === "Patient ID is required"
+                ? "We're setting up your appointments. Please complete your profile if you haven't already."
+                : error.message
+              : "Failed to load appointments"}
+          </p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
   
   const appointments = data?.appointments || [];

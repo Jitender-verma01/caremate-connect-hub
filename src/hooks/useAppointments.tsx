@@ -35,8 +35,30 @@ export const usePatientAppointments = () => {
   return useQuery({
     queryKey: ["appointments", "patient"],
     queryFn: async () => {
-      const response = await api.appointments.getPatientAppointments("current");
-      return response as GetAppointmentsResponse;
+      try {
+        // Get current user to extract patient profile
+        const userResponse = await api.auth.getCurrentUser();
+        const userId = userResponse?.data?._id;
+        
+        if (!userId) {
+          throw new Error("User ID not found");
+        }
+        
+        // Get patient profile to get patient ID
+        const patientResponse = await api.patients.getProfile();
+        const patientId = patientResponse?.data?._id;
+        
+        if (!patientId) {
+          throw new Error("Patient profile not found");
+        }
+        
+        // Now get appointments with patient ID
+        const response = await api.appointments.getPatientAppointments(patientId);
+        return response as GetAppointmentsResponse;
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        throw error;
+      }
     },
   });
 };
