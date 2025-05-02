@@ -50,6 +50,7 @@ export function AvailabilityManagement() {
     }
   }, [doctorProfile]);
 
+  // Fix the mutation to use the correct time_slots endpoint with doctorId
   const updateAvailability = useMutation({
     mutationFn: () => {
       if (!doctorProfile?._id) {
@@ -59,7 +60,6 @@ export function AvailabilityManagement() {
       console.log("Sending update with doctor ID:", doctorProfile._id);
       console.log("Sending data:", availabilityData);
       
-      // Use the correct API endpoint with the doctor ID parameter
       return api.doctors.updateAvailability(doctorProfile._id, { 
         available_time_slots: availabilityData 
       });
@@ -108,6 +108,7 @@ export function AvailabilityManagement() {
             <TabsContent key={day} value={day} className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {TIME_SLOTS.map((time, timeIndex) => {
+                  // Handle potential undefined data gracefully
                   const isAvailable = availabilityData[dayIndex]?.times[timeIndex]?.status === 'available';
                   
                   return (

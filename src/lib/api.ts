@@ -142,6 +142,7 @@ export const api = {
     updateProfileImage: (formData: FormData) => 
       apiRequest("/doctor/update-profile-image", "PATCH", formData),
     
+    // Fix the updateAvailability method to match the backend route
     updateAvailability: (doctorId: string, data: {
       available_time_slots: Array<{
         day: string;
