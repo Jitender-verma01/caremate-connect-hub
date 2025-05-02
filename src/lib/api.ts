@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
@@ -178,6 +177,7 @@ export const api = {
   appointments: {
     create: (appointmentData: {
       doctorId: string;
+      patientId: string;
       date: string;
       time: string;
       consultationType: string;

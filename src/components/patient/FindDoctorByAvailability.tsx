@@ -9,7 +9,8 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle,
-  CardDescription
+  CardDescription,
+  CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon, User, Clock, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, User, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SPECIALIZATIONS = [
@@ -40,7 +41,7 @@ const SPECIALIZATIONS = [
 
 export function FindDoctorByAvailability() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [specialization, setSpecialization] = useState<string | undefined>();
+  const [specialization, setSpecialization] = useState<string | undefined>('all');
   const navigate = useNavigate();
   
   const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
@@ -63,7 +64,7 @@ export function FindDoctorByAvailability() {
 
   // Handle specialization change
   const handleSpecializationChange = (value: string) => {
-    setSpecialization(value === 'all' ? undefined : value);
+    setSpecialization(value);
   };
 
   return (
@@ -135,6 +136,7 @@ export function FindDoctorByAvailability() {
                     We're having trouble loading doctors right now.
                   </p>
                   <Button variant="outline" onClick={() => refetch()}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     Try Again
                   </Button>
                 </div>
@@ -182,12 +184,24 @@ export function FindDoctorByAvailability() {
                   <p className="text-muted-foreground">
                     No doctors available for the selected criteria
                   </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setSpecialization('all')}
+                  >
+                    View All Specialties
+                  </Button>
                 </div>
               )}
             </div>
           </div>
         </div>
       </CardContent>
+      <CardFooter className="bg-muted/20 border-t flex justify-center pt-4">
+        <p className="text-xs text-muted-foreground">
+          Select a doctor and date to book your appointment
+        </p>
+      </CardFooter>
     </Card>
   );
 }

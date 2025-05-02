@@ -20,6 +20,9 @@ interface Appointment {
 
 interface GetAppointmentsResponse {
   appointments: Appointment[];
+  success?: boolean;
+  statusCode?: number;
+  message?: string;
 }
 
 interface BookAppointmentParams {
@@ -36,30 +39,48 @@ export const usePatientAppointments = () => {
     queryKey: ["appointments", "patient"],
     queryFn: async () => {
       try {
-        // Get current user to extract patient profile
-        const userResponse = await api.auth.getCurrentUser();
-        const userId = userResponse?.data?._id;
-        
-        if (!userId) {
-          throw new Error("User ID not found");
-        }
-        
         // Get patient profile to get patient ID
         const patientResponse = await api.patients.getProfile();
-        const patientId = patientResponse?.data?._id;
         
-        if (!patientId) {
+        if (!patientResponse?.data?._id) {
           throw new Error("Patient profile not found");
         }
         
+        const patientId = patientResponse.data._id;
+        
         // Now get appointments with patient ID
         const response = await api.appointments.getPatientAppointments(patientId);
-        return response as GetAppointmentsResponse;
+        
+        // Transform API response to match our frontend format
+        if (response?.data) {
+          const appointments = Array.isArray(response.data) ? response.data : [];
+          
+          return {
+            appointments: appointments.map((app: any) => ({
+              id: app._id || app.id,
+              doctorId: app.doctorId?._id || app.doctorId,
+              doctorName: app.doctorId?.user_id?.name || "Unknown Doctor",
+              doctorSpecialty: app.doctorId?.specialization || "General",
+              date: app.appointmentDate || app.date,
+              time: app.timeSlot || app.time,
+              status: app.status || "scheduled",
+              consultationType: app.consultationType || "Video Consultation",
+              reason: app.reason,
+              createdAt: app.createdAt,
+              updatedAt: app.updatedAt
+            }))
+          } as GetAppointmentsResponse;
+        }
+        
+        // Return empty array if no appointments
+        return { appointments: [] };
       } catch (error) {
         console.error("Error fetching appointments:", error);
         throw error;
       }
     },
+    retry: 1,
+    staleTime: 30000, // 30 seconds
   });
 };
 
@@ -69,7 +90,29 @@ export const useDoctorAppointments = (doctorId: string) => {
     queryKey: ["appointments", "doctor", doctorId],
     queryFn: async () => {
       const response = await api.appointments.getDoctorAppointments(doctorId);
-      return response as GetAppointmentsResponse;
+      
+      // Transform API response to match our frontend format
+      if (response?.data) {
+        const appointments = Array.isArray(response.data) ? response.data : [];
+        
+        return {
+          appointments: appointments.map((app: any) => ({
+            id: app._id || app.id,
+            doctorId: app.doctorId?._id || app.doctorId,
+            patientId: app.patientId?._id || app.patientId,
+            patientName: app.patientId?.user_id?.name || "Unknown Patient",
+            date: app.appointmentDate || app.date,
+            time: app.timeSlot || app.time,
+            status: app.status || "scheduled",
+            consultationType: app.consultationType || "Video Consultation",
+            reason: app.reason,
+            createdAt: app.createdAt,
+            updatedAt: app.updatedAt
+          }))
+        } as GetAppointmentsResponse;
+      }
+      
+      return { appointments: [] };
     },
     enabled: !!doctorId,
   });
@@ -92,8 +135,21 @@ export const useBookAppointment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (appointment: BookAppointmentParams) => {
-      return api.appointments.create(appointment);
+    mutationFn: async (appointment: BookAppointmentParams) => {
+      // Get patient profile to get patient ID
+      const patientResponse = await api.patients.getProfile();
+      
+      if (!patientResponse?.data?._id) {
+        throw new Error("Patient profile not found");
+      }
+      
+      const patientId = patientResponse.data._id;
+      
+      // Add patientId to the appointment data
+      return api.appointments.create({
+        ...appointment,
+        patientId
+      });
     },
     onSuccess: () => {
       toast.success("Appointment booked successfully!");

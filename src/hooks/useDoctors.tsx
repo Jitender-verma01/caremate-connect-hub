@@ -44,49 +44,6 @@ export interface EnrichedDoctor {
   };
 }
 
-// Mock data for doctors when the API fails
-const MOCK_DOCTORS: EnrichedDoctor[] = [
-  {
-    id: "doctor1",
-    userId: "user1",
-    name: "Dr. Sarah Johnson",
-    email: "sarah.johnson@example.com",
-    specialty: "Cardiology",
-    image: "/placeholder.svg",
-    qualification: "MD, Cardiology",
-    experience: 8,
-    fee: 120,
-    status: 'active',
-    consultationTypes: ['Video Consultation', 'In-person Consultation'],
-  },
-  {
-    id: "doctor2",
-    userId: "user2",
-    name: "Dr. Michael Chen",
-    email: "michael.chen@example.com",
-    specialty: "Neurology",
-    image: "/placeholder.svg",
-    qualification: "MD, Neurology",
-    experience: 12,
-    fee: 150,
-    status: 'active',
-    consultationTypes: ['Video Consultation', 'In-person Consultation'],
-  },
-  {
-    id: "doctor3",
-    userId: "user3",
-    name: "Dr. Amelia Rodriguez",
-    email: "amelia.rodriguez@example.com",
-    specialty: "Pediatrics",
-    image: "/placeholder.svg",
-    qualification: "MD, Pediatrics",
-    experience: 5,
-    fee: 100,
-    status: 'active',
-    consultationTypes: ['Video Consultation'],
-  }
-];
-
 // Transform API doctor to frontend format
 const transformDoctor = (apiDoctor: Doctor): EnrichedDoctor => {
   return {
@@ -109,24 +66,46 @@ export const useDoctors = (searchParams?: { specialization?: string; name?: stri
     queryKey: ['doctors', searchParams],
     queryFn: async () => {
       try {
-        const data = await api.doctors.getAll(searchParams);
-        return Array.isArray(data.data) 
-          ? data.data.map(transformDoctor)
-          : [];
-      } catch (error) {
-        console.error("Error fetching doctors:", error);
-        
-        // Filter mock doctors if specialization is provided
-        if (searchParams?.specialization) {
-          return MOCK_DOCTORS.filter(doctor => 
-            doctor.specialty === searchParams.specialization
-          );
+        // Use proper API params format
+        const queryParams: any = {};
+        if (searchParams?.specialization && searchParams.specialization !== 'all') {
+          queryParams.specialization = searchParams.specialization;
+        }
+        if (searchParams?.name) {
+          queryParams.name = searchParams.name;
+        }
+        if (searchParams?.experience) {
+          queryParams.experience = searchParams.experience;
         }
         
-        // Return all mock doctors if no filter or if filter failed
-        return MOCK_DOCTORS;
+        const data = await api.doctors.getAll(queryParams);
+        
+        // Handle different response formats from backend
+        if (data?.data) {
+          // If data is an array, map through it
+          if (Array.isArray(data.data)) {
+            return data.data.map(transformDoctor);
+          }
+          // If data has a doctors property that is an array
+          else if (Array.isArray(data.data.doctors)) {
+            return data.data.doctors.map(transformDoctor);
+          }
+          // If data is a single object
+          else if (typeof data.data === 'object') {
+            return [transformDoctor(data.data)];
+          }
+        }
+        
+        // Return an empty array if no doctors found or unable to parse response
+        console.log("No doctors found in response:", data);
+        return [];
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+        // Do not use mock data, return empty array instead
+        return [];
       }
     },
+    staleTime: 60000, // 1 minute
   });
 };
 
@@ -136,10 +115,10 @@ export const useDoctor = (id: string) => {
     queryFn: async () => {
       try {
         const data = await api.doctors.getById(id);
-        return data.data ? transformDoctor(data.data) : null;
+        return data?.data ? transformDoctor(data.data) : null;
       } catch (error) {
         console.error("Error fetching doctor:", error);
-        return MOCK_DOCTORS.find(doctor => doctor.id === id) || null;
+        return null;
       }
     },
     enabled: !!id,
@@ -152,14 +131,57 @@ export const useDoctorAvailability = (id: string, date: string) => {
     queryFn: async () => {
       try {
         const data = await api.doctors.getAvailability(id, date);
-        return data.data || null;
+        
+        // Handle different response formats
+        if (data?.data) {
+          // If the response is already in the format we need
+          if (typeof data.data === 'object' && !Array.isArray(data.data)) {
+            return data.data;
+          }
+          
+          // If the response is an array of available time slots
+          else if (Array.isArray(data.data)) {
+            // Convert the array into our frontend format
+            const availabilityByPeriod: {[key: string]: string[]} = {
+              morning: [],
+              afternoon: [],
+              evening: []
+            };
+            
+            data.data.forEach(slot => {
+              const availableTimes = slot.times
+                .filter((time: any) => time.status === 'available')
+                .map((time: any) => time.time);
+              
+              availableTimes.forEach((time: string) => {
+                const hour = parseInt(time.split(':')[0]);
+                if (hour < 12) {
+                  availabilityByPeriod.morning.push(time);
+                } else if (hour < 17) {
+                  availabilityByPeriod.afternoon.push(time);
+                } else {
+                  availabilityByPeriod.evening.push(time);
+                }
+              });
+            });
+            
+            return availabilityByPeriod;
+          }
+        }
+        
+        // Return empty availability if nothing could be parsed
+        return {
+          morning: [],
+          afternoon: [],
+          evening: []
+        };
       } catch (error) {
         console.error("Error fetching doctor availability:", error);
-        // Return mock availability data
+        // Return empty availability on error
         return {
-          morning: ["09:00 AM", "10:00 AM", "11:00 AM"],
-          afternoon: ["01:00 PM", "02:00 PM", "03:00 PM"],
-          evening: ["05:00 PM", "06:00 PM"]
+          morning: [],
+          afternoon: [],
+          evening: []
         };
       }
     },
