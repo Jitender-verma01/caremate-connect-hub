@@ -79,7 +79,7 @@ export function FindDoctorByAvailability() {
                 <SelectValue placeholder="Select specialty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Specialties</SelectItem>
+                <SelectItem value="all">All Specialties</SelectItem>
                 {SPECIALIZATIONS.map((spec) => (
                   <SelectItem key={spec} value={spec}>{spec}</SelectItem>
                 ))}
