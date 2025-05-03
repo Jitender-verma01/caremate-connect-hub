@@ -63,7 +63,7 @@ export const usePatientAppointments = () => {
         const patientId = patientProfileQuery.data._id;
         console.log("Using patient ID for appointments:", patientId);
         
-        // Now get appointments with patient ID
+        // Now get appointments with patient ID using the updated API endpoint
         const response = await api.appointments.getPatientAppointments(patientId);
         console.log("Appointments response:", response);
         

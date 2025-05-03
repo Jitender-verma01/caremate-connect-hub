@@ -186,12 +186,12 @@ export const api = {
     
     getById: (id: string) => apiRequest(`/appointment/${id}`),
     
-    // Fixed the typo in the route parameter name (was "pateintId", now "patientId")
+    // Updated to use the new route pattern
     getPatientAppointments: (patientId: string) => 
-      apiRequest(`/appointment/${patientId}/appointments`),
+      apiRequest(`/appointment/patient/${patientId}`),
     
     getDoctorAppointments: (doctorId: string) => 
-      apiRequest(`/appointment/${doctorId}/appointments`),
+      apiRequest(`/appointment/doctor/${doctorId}`),
     
     cancel: (id: string) => apiRequest(`/appointment/cancel/${id}`, "PATCH"),
     
