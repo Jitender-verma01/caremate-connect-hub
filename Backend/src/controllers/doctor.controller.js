@@ -250,7 +250,7 @@ const getDoctors = asyncHandler(async (req, res) => {
         },
         {
             $unwind: {
-                path: 'ratings',
+                path: '$ratings',
                 preserveNullAndEmptyArrays: true
             }
         },
