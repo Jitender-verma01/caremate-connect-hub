@@ -51,7 +51,7 @@ const LandingPage = () => {
           <Link to="/" className="flex items-center space-x-2">
             {/* Updated logo with the new blue cross + heart logo */}
             <img 
-              src="/public/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
+              src="/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
               alt="CareMate Logo" 
               className="h-8 w-8" 
             />
@@ -107,7 +107,7 @@ const LandingPage = () => {
           <div className="md:w-1/2 flex justify-center md:justify-end">
             {/* Updated hero image with the new telemedicine consultation image */}
             <img 
-              src="/public/lovable-uploads/9daa46c4-08f0-48ed-b764-325c5a131541.png" 
+              src="/lovable-uploads/9daa46c4-08f0-48ed-b764-325c5a131541.png" 
               alt="Virtual Doctor Consultation" 
               className="w-full max-w-md rounded-lg shadow-xl" 
             />
