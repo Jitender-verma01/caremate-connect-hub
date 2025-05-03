@@ -1,3 +1,4 @@
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ export const usePatientAppointments = () => {
     queryFn: async () => {
       try {
         const response = await api.patients.getProfile();
+        console.log("Patient profile response:", response);
         return response?.data;
       } catch (error) {
         console.error("Error fetching patient profile:", error);
@@ -62,7 +64,9 @@ export const usePatientAppointments = () => {
         console.log("Using patient ID for appointments:", patientId);
         
         // Now get appointments with patient ID
+        // Fix: Use the correct endpoint path format using 'pateintId' to match backend route
         const response = await api.appointments.getPatientAppointments(patientId);
+        console.log("Appointments response:", response);
         
         // Transform API response to match our frontend format
         if (response?.data) {
