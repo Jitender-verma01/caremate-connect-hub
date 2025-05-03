@@ -33,10 +33,15 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
     queryKey: ["doctors", params],
     queryFn: async () => {
       try {
+        console.log("Fetching doctors with params:", params);
+        
         // If specialization is provided and not "all", use the specialization endpoint
         if (params.specialization && params.specialization !== "all") {
+          console.log(`Using specialization endpoint for: ${params.specialization}`);
           const response = await api.doctors.getBySpecialization(params.specialization);
+          
           if (!response?.data) {
+            console.log("No data returned from specialization endpoint");
             return [];
           }
           
@@ -53,6 +58,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
           }));
         } else {
           // Use the getAll endpoint with any provided filters
+          console.log("Using getAll endpoint with filters");
           const response = await api.doctors.getAll({
             specialization: params.specialization === "all" ? undefined : params.specialization,
             name: params.name,
@@ -60,6 +66,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
           });
           
           if (!response?.data) {
+            console.log("No data returned from getAll endpoint");
             return [];
           }
           
@@ -80,7 +87,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
         throw error;
       }
     },
-    retry: 2,
+    retry: 1,
     staleTime: 60000, // 1 minute
   });
 };

@@ -1,3 +1,4 @@
+
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Doctor } from "../models/doctor.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -229,7 +230,7 @@ const getAvailableSlotsForDoctor = asyncHandler(async (req, res) => {
 });
 
 const getDoctors = asyncHandler(async (req, res) => {
-    const {specialization, experience, available_time_slots, name} = req.query;
+    const {specialization, experience, available_time_slots, name, minRating} = req.query;
 
     const pipeline = [
         {
@@ -292,12 +293,12 @@ const getDoctors = asyncHandler(async (req, res) => {
 
     const doctors = await Doctor.aggregate(pipeline);
 
-    if (doctors) {
-        throw new ApiError(404, "No doctors found")
+    // FIX: This conditional was wrong - it was throwing an error when doctors were found!
+    if (!doctors || doctors.length === 0) {
+        throw new ApiError(404, "No doctors found");
     }
 
-    return res.status(200).json(new ApiResponse(200, doctors, "Doctors Found"))
-
+    return res.status(200).json(new ApiResponse(200, doctors, "Doctors Found"));
 });
 
 export { 

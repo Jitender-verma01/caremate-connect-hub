@@ -17,4 +17,4 @@ router.route("/cancel/:appointmentId").patch(cancelAppointment);
 router.route("/update/:appointmentId").patch(updateAppointmentStatus);
 
 
-export default router
+export default router;

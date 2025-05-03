@@ -151,6 +151,9 @@ export function FindDoctorByAvailability() {
                               src={doctor.image || "/placeholder.svg"} 
                               alt={doctor.name}
                               className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "/placeholder.svg";
+                              }}
                             />
                           </div>
                           
