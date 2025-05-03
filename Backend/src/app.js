@@ -9,7 +9,8 @@ const allowedOrigins = [
   process.env.CORS_ORIGIN,
   "https://d7f9259f-d9b3-4e4a-ad41-f123ef935886.lovableproject.com",
   "https://id-preview--d7f9259f-d9b3-4e4a-ad41-f123ef935886.lovable.app",
-  "http://localhost:8080"
+  "http://localhost:8080",
+  "https://caremate-gules.vercel.app"
 ];
 
 app.use(cors({
