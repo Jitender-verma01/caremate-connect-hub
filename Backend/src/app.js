@@ -5,8 +5,21 @@ import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
 
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  "https://d7f9259f-d9b3-4e4a-ad41-f123ef935886.lovableproject.com",
+  "https://id-preview--d7f9259f-d9b3-4e4a-ad41-f123ef935886.lovable.app",
+  "http://localhost:8080"
+];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN, 
+  origin: function (origin, callback) {
+    if(!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  }, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
