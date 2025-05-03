@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
@@ -70,7 +69,6 @@ export const apiRequest = async (
     return responseData;
   } catch (error) {
     console.error("API request failed:", error);
-    toast.error(error instanceof Error ? error.message : "Request failed");
     throw error;
   }
 };
@@ -178,6 +176,7 @@ export const api = {
   appointments: {
     create: (appointmentData: {
       doctorId: string;
+      patientId: string;
       date: string;
       time: string;
       consultationType: string;

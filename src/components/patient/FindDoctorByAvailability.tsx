@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
 import { useDoctors } from '@/hooks/useDoctors';
@@ -9,10 +9,12 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle,
-  CardDescription
+  CardDescription,
+  CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton'; 
 import { 
   Select,
   SelectContent,
@@ -20,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon, User, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, User, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 const SPECIALIZATIONS = [
   "General Medicine",
@@ -38,17 +41,30 @@ const SPECIALIZATIONS = [
 
 export function FindDoctorByAvailability() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [specialization, setSpecialization] = useState<string | undefined>();
+  const [specialization, setSpecialization] = useState<string>("all");
   const navigate = useNavigate();
   
   const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   
-  const { data: doctors, isLoading } = useDoctors({
-    specialization: specialization,
+  const { data: doctors, isLoading, error, refetch } = useDoctors({
+    specialization: specialization === 'all' ? undefined : specialization,
   });
+
+  // If there's an error loading doctors, show a toast
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load doctors. Please try again later.");
+      console.error("Doctor fetch error:", error);
+    }
+  }, [error]);
 
   const handleBookAppointment = (doctorId: string) => {
     navigate(`/book-appointment/${doctorId}?date=${formattedDate}`);
+  };
+
+  // Handle specialization change
+  const handleSpecializationChange = (value: string) => {
+    setSpecialization(value);
   };
 
   return (
@@ -74,12 +90,15 @@ export function FindDoctorByAvailability() {
           
           <div>
             <h3 className="text-sm font-medium mb-2">Filter by Specialty</h3>
-            <Select value={specialization} onValueChange={setSpecialization}>
+            <Select 
+              value={specialization} 
+              onValueChange={handleSpecializationChange}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select specialty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Specialties</SelectItem>
+                <SelectItem value="all">All Specialties</SelectItem>
                 {SPECIALIZATIONS.map((spec) => (
                   <SelectItem key={spec} value={spec}>{spec}</SelectItem>
                 ))}
@@ -90,7 +109,37 @@ export function FindDoctorByAvailability() {
               <h3 className="text-sm font-medium mb-2">Available Doctors</h3>
               
               {isLoading ? (
-                <p className="text-muted-foreground">Loading doctors...</p>
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-16 w-16 rounded-full" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
+                            <div className="flex gap-2 mt-1">
+                              <Skeleton className="h-5 w-24" />
+                              <Skeleton className="h-5 w-24" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-9 w-24" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="text-center py-6 border rounded-lg">
+                  <AlertCircle className="mx-auto h-10 w-10 text-destructive mb-2" />
+                  <p className="text-muted-foreground mb-2">
+                    We're having trouble loading doctors right now.
+                  </p>
+                  <Button variant="outline" onClick={() => refetch()}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Try Again
+                  </Button>
+                </div>
               ) : doctors && doctors.length > 0 ? (
                 <div className="space-y-4">
                   {doctors.map((doctor) => (
@@ -108,7 +157,7 @@ export function FindDoctorByAvailability() {
                           <div className="flex-1">
                             <h4 className="font-medium">{doctor.name}</h4>
                             <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
-                            <div className="flex gap-2 mt-1">
+                            <div className="flex flex-wrap gap-2 mt-1">
                               <Badge variant="outline" className="text-xs">
                                 {doctor.experience} years exp
                               </Badge>
@@ -130,14 +179,29 @@ export function FindDoctorByAvailability() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-4">
-                  No doctors available for the selected criteria
-                </p>
+                <div className="text-center py-8">
+                  <User className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">
+                    No doctors available for the selected criteria
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setSpecialization('all')}
+                  >
+                    View All Specialties
+                  </Button>
+                </div>
               )}
             </div>
           </div>
         </div>
       </CardContent>
+      <CardFooter className="bg-muted/20 border-t flex justify-center pt-4">
+        <p className="text-xs text-muted-foreground">
+          Select a doctor and date to book your appointment
+        </p>
+      </CardFooter>
     </Card>
   );
 }

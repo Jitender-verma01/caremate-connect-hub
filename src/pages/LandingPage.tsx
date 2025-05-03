@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,11 +49,12 @@ const LandingPage = () => {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-care-primary text-white p-2 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
+            {/* Updated logo with the new blue cross + heart logo */}
+            <img 
+              src="/public/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
+              alt="CareMate Logo" 
+              className="h-8 w-8" 
+            />
             <span className="text-xl font-bold">CareMate</span>
           </Link>
           
@@ -103,9 +105,10 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="md:w-1/2 flex justify-center md:justify-end">
+            {/* Updated hero image with the new telemedicine consultation image */}
             <img 
-              src="/public/lovable-uploads/09966816-24c1-4907-925f-82f5c1194f64.png" 
-              alt="Healthcare Platform" 
+              src="/public/lovable-uploads/9daa46c4-08f0-48ed-b764-325c5a131541.png" 
+              alt="Virtual Doctor Consultation" 
               className="w-full max-w-md rounded-lg shadow-xl" 
             />
           </div>
@@ -243,11 +246,12 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <Link to="/" className="flex items-center space-x-2 mb-4">
-                <div className="bg-white text-care-primary p-2 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
+                {/* Updated footer logo */}
+                <img 
+                  src="/public/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
+                  alt="CareMate Logo" 
+                  className="h-8 w-8 bg-white rounded-lg p-1" 
+                />
                 <span className="text-xl font-bold text-white">CareMate</span>
               </Link>
               <p className="text-sm">
