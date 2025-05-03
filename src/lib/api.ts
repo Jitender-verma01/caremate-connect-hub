@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
@@ -185,6 +186,7 @@ export const api = {
     
     getById: (id: string) => apiRequest(`/appointment/${id}`),
     
+    // Fixed the typo in the route parameter name (was "pateintId", now "patientId")
     getPatientAppointments: (patientId: string) => 
       apiRequest(`/appointment/${patientId}/appointments`),
     

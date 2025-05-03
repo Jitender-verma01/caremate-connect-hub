@@ -2,6 +2,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { MyAppointments } from '@/components/patient/MyAppointments';
 import { FindDoctorByAvailability } from '@/components/patient/FindDoctorByAvailability';
+import { AppointmentSummary } from '@/components/patient/AppointmentSummary';
 import { AppointmentManagement } from '@/components/doctor/AppointmentManagement';
 import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +60,13 @@ const Dashboard = () => {
             <Card className="bg-gradient-to-br from-care-light to-white border-care-primary/20">
               <CardContent className="p-0">
                 <MyAppointments />
+              </CardContent>
+            </Card>
+            
+            {/* Add this new appointments summary card */}
+            <Card className="bg-gradient-to-br from-care-light to-white border-care-primary/20">
+              <CardContent className="p-0">
+                <AppointmentSummary />
               </CardContent>
             </Card>
           </div>
@@ -159,6 +167,6 @@ const Dashboard = () => {
       )}
     </div>
   );
-};
+}
 
 export default Dashboard;

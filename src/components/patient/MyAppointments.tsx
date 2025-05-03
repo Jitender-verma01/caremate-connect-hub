@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
+import { isAppointmentNow } from '@/utils/appointment-utils';
 
 export function MyAppointments() {
   const { data, isLoading, error, refetch } = usePatientAppointments();
@@ -90,7 +91,7 @@ export function MyAppointments() {
   );
   
   const pastAppointments = appointments.filter(
-    app => new Date(app.date) < new Date() || app.status === 'completed' || app.status === 'canceled'
+    app => new Date(app.date) < new Date() || app.status === 'completed' || app.status === 'canceled' || app.status === 'cancelled'
   );
   
   const todayAppointments = appointments.filter(
@@ -131,7 +132,7 @@ export function MyAppointments() {
             <span>{appointment.time}</span>
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            {appointment.consultationType}
+            {appointment.consultationType || 'Video Consultation'}
           </div>
         </div>
 
@@ -194,39 +195,6 @@ export function MyAppointments() {
       </CardContent>
     </Card>
   );
-
-  // Helper function to determine if appointment is happening now
-  function isAppointmentNow(appointment: any) {
-    const appointmentDate = new Date(appointment.date);
-    const today = new Date();
-    
-    // Check if it's the same day
-    const sameDay = format(appointmentDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-    
-    if (!sameDay) return false;
-    
-    // Extract hours from appointment time (format: "10:00 AM")
-    const [time, period] = appointment.time.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    
-    // Convert to 24-hour format
-    let appointmentHour = hours;
-    if (period === 'PM' && hours < 12) appointmentHour += 12;
-    if (period === 'AM' && hours === 12) appointmentHour = 0;
-    
-    // Get current hour
-    const currentHour = today.getHours();
-    const currentMinute = today.getMinutes();
-    
-    // Appointment is considered "now" if it's within 15 minutes before or 30 minutes after the scheduled time
-    const appointmentTimeInMinutes = appointmentHour * 60 + minutes;
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-    
-    return (
-      currentTimeInMinutes >= appointmentTimeInMinutes - 15 && 
-      currentTimeInMinutes <= appointmentTimeInMinutes + 30
-    );
-  }
 
   return (
     <Card>

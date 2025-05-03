@@ -4,28 +4,28 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 // Types
-interface Appointment {
+export interface Appointment {
   id: string;
   doctorId: string;
   doctorName?: string;
   doctorSpecialty?: string;
   date: string;
   time: string;
-  status: "scheduled" | "completed" | "canceled";
+  status: "scheduled" | "completed" | "canceled" | "cancelled";
   consultationType: string;
   reason?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-interface GetAppointmentsResponse {
+export interface GetAppointmentsResponse {
   appointments: Appointment[];
   success?: boolean;
   statusCode?: number;
   message?: string;
 }
 
-interface BookAppointmentParams {
+export interface BookAppointmentParams {
   doctorId: string;
   date: string;
   time: string;
@@ -64,7 +64,6 @@ export const usePatientAppointments = () => {
         console.log("Using patient ID for appointments:", patientId);
         
         // Now get appointments with patient ID
-        // Fix: Use the correct endpoint path format using 'pateintId' to match backend route
         const response = await api.appointments.getPatientAppointments(patientId);
         console.log("Appointments response:", response);
         
@@ -79,7 +78,7 @@ export const usePatientAppointments = () => {
               doctorName: app.doctorId?.user_id?.name || "Unknown Doctor",
               doctorSpecialty: app.doctorId?.specialization || "General",
               date: app.appointmentDate || app.date,
-              time: app.timeSlot || app.time,
+              time: app.timeSlot?.time || app.timeSlot || app.time,
               status: app.status || "scheduled",
               consultationType: app.consultationType || "Video Consultation",
               reason: app.reason,
@@ -121,7 +120,7 @@ export const useDoctorAppointments = (doctorId: string) => {
             patientId: app.patientId?._id || app.patientId,
             patientName: app.patientId?.user_id?.name || "Unknown Patient",
             date: app.appointmentDate || app.date,
-            time: app.timeSlot || app.time,
+            time: app.timeSlot?.time || app.timeSlot || app.time,
             status: app.status || "scheduled",
             consultationType: app.consultationType || "Video Consultation",
             reason: app.reason,

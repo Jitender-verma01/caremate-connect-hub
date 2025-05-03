@@ -14,93 +14,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Star, Calendar, DollarSign, ChevronDown } from "lucide-react";
+import { Star, Calendar, DollarSign, ChevronDown, User, AlertCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-// Mock doctors data
-const mockDoctors = [
-  {
-    id: "1",
-    name: "Dr. Robert Chen",
-    specialty: "Cardiologist",
-    image: "https://randomuser.me/api/portraits/men/52.jpg",
-    rating: 4.8,
-    reviewCount: 124,
-    experience: 12,
-    fee: 150,
-    nextAvailable: "Tomorrow",
-    education: "Stanford University Medical School",
-    languages: ["English", "Mandarin"],
-  },
-  {
-    id: "2",
-    name: "Dr. Sarah Johnson",
-    specialty: "Neurologist",
-    image: "https://randomuser.me/api/portraits/women/32.jpg",
-    rating: 5.0,
-    reviewCount: 89,
-    experience: 8,
-    fee: 175,
-    nextAvailable: "Today",
-    education: "Harvard Medical School",
-    languages: ["English", "Spanish"],
-  },
-  {
-    id: "3",
-    name: "Dr. Michael Wong",
-    specialty: "Dermatologist",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-    rating: 4.5,
-    reviewCount: 62,
-    experience: 15,
-    fee: 120,
-    nextAvailable: "In 2 days",
-    education: "Johns Hopkins University School of Medicine",
-    languages: ["English", "French"],
-  },
-  {
-    id: "4",
-    name: "Dr. Jessica Patel",
-    specialty: "Psychiatrist",
-    image: "https://randomuser.me/api/portraits/women/68.jpg",
-    rating: 4.9,
-    reviewCount: 157,
-    experience: 10,
-    fee: 190,
-    nextAvailable: "Today",
-    education: "Yale School of Medicine",
-    languages: ["English", "Hindi", "Gujarati"],
-  },
-  {
-    id: "5",
-    name: "Dr. David Lee",
-    specialty: "Orthopedic Surgeon",
-    image: "https://randomuser.me/api/portraits/men/22.jpg",
-    rating: 4.7,
-    reviewCount: 104,
-    experience: 20,
-    fee: 200,
-    nextAvailable: "In 3 days",
-    education: "Mayo Clinic School of Medicine",
-    languages: ["English", "Korean"],
-  },
-  {
-    id: "6",
-    name: "Dr. Emily Martinez",
-    specialty: "Pediatrician",
-    image: "https://randomuser.me/api/portraits/women/45.jpg",
-    rating: 4.9,
-    reviewCount: 132,
-    experience: 7,
-    fee: 130,
-    nextAvailable: "Tomorrow",
-    education: "Columbia University College of Physicians and Surgeons",
-    languages: ["English", "Spanish"],
-  },
-];
+import { useDoctors } from "@/hooks/useDoctors";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // List of specialties for filter
-const specialties = ["All Specialties", "Cardiologist", "Neurologist", "Dermatologist", "Psychiatrist", "Orthopedic Surgeon", "Pediatrician"];
+const SPECIALIZATIONS = [
+  "All Specialties", 
+  "General Medicine",
+  "Cardiology",
+  "Dermatology",
+  "Neurology",
+  "Pediatrics",
+  "Orthopedics",
+  "Gynecology",
+  "Ophthalmology",
+  "ENT",
+  "Psychiatry",
+  "Dental",
+];
 
 const DoctorSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,23 +41,24 @@ const DoctorSearch = () => {
   const [maxFee, setMaxFee] = useState(200);
   const [sortBy, setSortBy] = useState("rating");
 
-  // Filter doctors based on search and filters
-  const filteredDoctors = mockDoctors.filter(doctor => {
-    const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
-                         
-    const matchesSpecialty = selectedSpecialty === "All Specialties" || 
-                           doctor.specialty === selectedSpecialty;
-                           
-    const matchesFee = doctor.fee <= maxFee;
-    
-    return matchesSearch && matchesSpecialty && matchesFee;
+  // Fetch doctors using our hook
+  const { data: doctorsData, isLoading, error, refetch } = useDoctors({
+    specialization: selectedSpecialty === "All Specialties" ? undefined : selectedSpecialty,
+    name: searchTerm,
+  });
+  
+  const doctors = doctorsData || [];
+  
+  // Filter doctors based on fee
+  const filteredDoctors = doctors.filter(doctor => {
+    const matchesFee = doctor.fee <= maxFee;    
+    return matchesFee;
   });
   
   // Sort doctors based on selected criteria
   const sortedDoctors = [...filteredDoctors].sort((a, b) => {
     if (sortBy === "rating") {
-      return b.rating - a.rating;
+      return (b.rating || 0) - (a.rating || 0);
     }
     if (sortBy === "experience") {
       return b.experience - a.experience;
@@ -178,7 +112,7 @@ const DoctorSearch = () => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Medical Specialties</SelectLabel>
-                      {specialties.map(specialty => (
+                      {SPECIALIZATIONS.map(specialty => (
                         <SelectItem key={specialty} value={specialty}>
                           {specialty}
                         </SelectItem>
@@ -247,7 +181,7 @@ const DoctorSearch = () => {
         <div className="md:col-span-3">
           <div className="flex justify-between items-center mb-4">
             <p className="text-muted-foreground">
-              Showing {sortedDoctors.length} doctors
+              {isLoading ? 'Loading doctors...' : `Showing ${sortedDoctors.length} doctors`}
             </p>
             <div className="flex space-x-2">
               <Button variant="outline" size="sm" className="hidden md:flex">
@@ -259,9 +193,58 @@ const DoctorSearch = () => {
           </div>
           
           {/* Doctor cards list */}
-          <div className="space-y-4">
-            {sortedDoctors.length > 0 ? (
-              sortedDoctors.map((doctor) => (
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col md:flex-row">
+                      <div className="md:w-1/4 p-6 flex flex-col justify-center items-center border-r bg-card">
+                        <Skeleton className="w-24 h-24 rounded-full" />
+                        <Skeleton className="w-16 h-4 mt-3" />
+                      </div>
+                      <div className="md:w-2/4 p-6">
+                        <Skeleton className="h-6 w-40 mb-2" />
+                        <Skeleton className="h-4 w-28 mb-4" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-3 w-full" />
+                          <Skeleton className="h-3 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      </div>
+                      <div className="md:w-1/4 p-6 flex flex-col justify-between border-t md:border-t-0 md:border-l bg-muted/30">
+                        <div>
+                          <Skeleton className="h-4 w-full mb-2" />
+                          <Skeleton className="h-6 w-16 mb-4" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-6 w-16 mt-2" />
+                        </div>
+                        <div className="space-y-2 mt-4">
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : error ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+                <h3 className="text-lg font-medium mb-2">Error loading doctors</h3>
+                <p className="text-muted-foreground mb-4">
+                  We encountered an issue while loading the doctors. Please try again.
+                </p>
+                <Button onClick={() => refetch()}>
+                  Retry
+                </Button>
+              </CardContent>
+            </Card>
+          ) : sortedDoctors.length > 0 ? (
+            <div className="space-y-4">
+              {sortedDoctors.map((doctor) => (
                 <Card key={doctor.id} className="overflow-hidden card-hover">
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row">
@@ -269,16 +252,19 @@ const DoctorSearch = () => {
                       <div className="md:w-1/4 p-6 flex flex-col justify-center items-center border-r bg-card">
                         <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
                           <img
-                            src={doctor.image}
+                            src={doctor.image || "/placeholder.svg"}
                             alt={doctor.name}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/placeholder.svg";
+                            }}
                           />
                         </div>
                         <div className="flex items-center justify-center">
                           <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                          <span className="font-medium ml-1">{doctor.rating}</span>
+                          <span className="font-medium ml-1">{doctor.rating || "4.5"}</span>
                           <span className="text-xs text-muted-foreground ml-1">
-                            ({doctor.reviewCount})
+                            ({doctor.reviewCount || "25"})
                           </span>
                         </div>
                       </div>
@@ -291,7 +277,7 @@ const DoctorSearch = () => {
                         <div className="mt-3 space-y-2">
                           <div className="flex items-start">
                             <div className="w-24 text-sm text-muted-foreground">Education:</div>
-                            <div className="flex-1 text-sm">{doctor.education}</div>
+                            <div className="flex-1 text-sm">Medical Doctor</div>
                           </div>
                           <div className="flex items-start">
                             <div className="w-24 text-sm text-muted-foreground">Experience:</div>
@@ -300,7 +286,7 @@ const DoctorSearch = () => {
                           <div className="flex items-start">
                             <div className="w-24 text-sm text-muted-foreground">Languages:</div>
                             <div className="flex-1 text-sm">
-                              {doctor.languages.join(", ")}
+                              English, Hindi
                             </div>
                           </div>
                         </div>
@@ -321,7 +307,7 @@ const DoctorSearch = () => {
                             <Calendar className="h-4 w-4 mr-2 text-care-primary" />
                             <span>Next Available:</span>
                           </div>
-                          <p className="font-medium">{doctor.nextAvailable}</p>
+                          <p className="font-medium">Today</p>
                           
                           <div className="flex items-center mt-3 mb-2 text-sm">
                             <DollarSign className="h-4 w-4 mr-2 text-care-primary" />
@@ -342,25 +328,26 @@ const DoctorSearch = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <h3 className="text-lg font-medium mb-2">No doctors found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Try adjusting your search criteria or filters
-                  </p>
-                  <Button onClick={() => {
-                    setSearchTerm("");
-                    setSelectedSpecialty("All Specialties");
-                    setMaxFee(200);
-                  }}>
-                    Reset Filters
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No doctors found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search criteria or filters
+                </p>
+                <Button onClick={() => {
+                  setSearchTerm("");
+                  setSelectedSpecialty("All Specialties");
+                  setMaxFee(200);
+                }}>
+                  Reset Filters
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
