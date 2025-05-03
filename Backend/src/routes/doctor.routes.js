@@ -12,7 +12,7 @@ router.route("/create").post(upload.single("profileImage"), createDoctor);
 router.route("/toggle-status/:doctorId").patch(toggleDoctorStatus);
 router.route("/update").patch(updateDoctorProfile);
 router.route("/update-profile-image").patch(upload.single("profileImage"), updateProfileImage);
-router.route("/time-slots").patch(updateAvailableTimeSlots);
+router.route("/time-slots/:doctorId").patch(updateAvailableTimeSlots);
 
 router.route("/profile").get(getDoctorByUserId);
 router.route("/profile/:doctorId").get(getDoctorById);
