@@ -17,6 +17,7 @@ import VideoConsultation from "./pages/VideoConsultation";
 import Prescriptions from "./pages/Prescriptions";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
+import AIAssistance from "./pages/AIAssistance";
 
 // Layout components
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="/doctors/:id" element={<DoctorProfile />} />
                 <Route path="/book-appointment/:doctorId" element={<BookAppointment />} />
                 <Route path="/prescriptions" element={<Prescriptions />} />
+                <Route path="/aiassistance" element={<AIAssistance />} />
                 <Route path="/consultation/:appointmentId" element={<VideoConsultation />} />
               </Route>
               

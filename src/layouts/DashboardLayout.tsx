@@ -12,7 +12,9 @@ import {
   User, 
   X,
   FileText,
-  Search
+  Search,
+  Bot,
+  Sparkles
 } from "lucide-react";
 import {
   Sidebar,
@@ -112,6 +114,19 @@ const DashboardLayout = () => {
                     <span className="flex items-center space-x-3">
                       <Calendar size={20} />
                       <span>Appointments</span>
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+              <Link to="/aiassistance">
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <span className="flex items-center space-x-3">
+                      <Bot size={20} />
+                      <span>AI Assistant</span>
+                      <Badge variant="outline" className="ml-1 bg-care-primary/10 text-care-primary">
+                        <Sparkles className="h-3 w-3" />
+                      </Badge>
                     </span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
