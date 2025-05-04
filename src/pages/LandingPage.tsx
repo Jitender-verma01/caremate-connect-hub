@@ -1,4 +1,5 @@
 
+import { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,6 +7,30 @@ import { Calendar, FileText, Video, User, ChevronRight, Search } from "lucide-re
 
 const LandingPage = () => {
   const { isAuthenticated } = useAuth();
+  
+  // References to sections for scrolling
+  const featuresRef = useRef<HTMLElement>(null);
+  const howItWorksRef = useRef<HTMLElement>(null);
+  const testimonialsRef = useRef<HTMLElement>(null);
+
+  // Function to handle scrolling to a section
+  const scrollToSection = (ref: React.RefObject<HTMLElement>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Handle anchor links in URL on page load
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === "#features" && featuresRef.current) {
+      setTimeout(() => featuresRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } else if (hash === "#how-it-works" && howItWorksRef.current) {
+      setTimeout(() => howItWorksRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } else if (hash === "#testimonials" && testimonialsRef.current) {
+      setTimeout(() => testimonialsRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, []);
 
   const features = [
     {
@@ -49,7 +74,6 @@ const LandingPage = () => {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            {/* Updated logo with the new blue cross + heart logo */}
             <img 
               src="/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
               alt="CareMate Logo" 
@@ -59,9 +83,9 @@ const LandingPage = () => {
           </Link>
           
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="#features" className="text-gray-600 hover:text-care-primary">Features</Link>
-            <Link to="#how-it-works" className="text-gray-600 hover:text-care-primary">How It Works</Link>
-            <Link to="#testimonials" className="text-gray-600 hover:text-care-primary">Testimonials</Link>
+            <button onClick={() => scrollToSection(featuresRef)} className="text-gray-600 hover:text-care-primary">Features</button>
+            <button onClick={() => scrollToSection(howItWorksRef)} className="text-gray-600 hover:text-care-primary">How It Works</button>
+            <button onClick={() => scrollToSection(testimonialsRef)} className="text-gray-600 hover:text-care-primary">Testimonials</button>
           </nav>
           
           <div className="flex items-center space-x-4">
@@ -97,15 +121,12 @@ const LandingPage = () => {
               <Button size="lg" asChild>
                 <Link to="/register">Get Started</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="#how-it-works" className="flex items-center">
-                  Learn More <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
+              <Button size="lg" variant="outline" onClick={() => scrollToSection(howItWorksRef)}>
+                Learn More <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
           </div>
           <div className="md:w-1/2 flex justify-center md:justify-end">
-            {/* Updated hero image with the new telemedicine consultation image */}
             <img 
               src="/lovable-uploads/9daa46c4-08f0-48ed-b764-325c5a131541.png" 
               alt="Virtual Doctor Consultation" 
@@ -116,7 +137,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
+      <section ref={featuresRef} id="features" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-care-dark">
             Why Choose CareMate
@@ -134,7 +155,7 @@ const LandingPage = () => {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-gray-50">
+      <section ref={howItWorksRef} id="how-it-works" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-care-dark">
             How CareMate Works
@@ -203,7 +224,7 @@ const LandingPage = () => {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-20 bg-white">
+      <section ref={testimonialsRef} id="testimonials" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-care-dark">
             What Our Users Say
@@ -246,9 +267,8 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <Link to="/" className="flex items-center space-x-2 mb-4">
-                {/* Updated footer logo */}
                 <img 
-                  src="/public/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
+                  src="/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
                   alt="CareMate Logo" 
                   className="h-8 w-8 bg-white rounded-lg p-1" 
                 />
@@ -262,18 +282,18 @@ const LandingPage = () => {
             <div>
               <h3 className="font-bold text-lg mb-4">Platform</h3>
               <ul className="space-y-2">
-                <li><Link to="#features" className="hover:text-white">Features</Link></li>
-                <li><Link to="#how-it-works" className="hover:text-white">How It Works</Link></li>
-                <li><Link to="#testimonials" className="hover:text-white">Testimonials</Link></li>
+                <li><button onClick={() => scrollToSection(featuresRef)} className="hover:text-white">Features</button></li>
+                <li><button onClick={() => scrollToSection(howItWorksRef)} className="hover:text-white">How It Works</button></li>
+                <li><button onClick={() => scrollToSection(testimonialsRef)} className="hover:text-white">Testimonials</button></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-bold text-lg mb-4">Support</h3>
               <ul className="space-y-2">
-                <li><Link to="#" className="hover:text-white">Help Center</Link></li>
-                <li><Link to="#" className="hover:text-white">FAQs</Link></li>
-                <li><Link to="#" className="hover:text-white">Contact Us</Link></li>
+                <li><button className="hover:text-white">Help Center</button></li>
+                <li><button className="hover:text-white">FAQs</button></li>
+                <li><button className="hover:text-white">Contact Us</button></li>
               </ul>
             </div>
             

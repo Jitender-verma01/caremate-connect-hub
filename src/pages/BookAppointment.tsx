@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Check, Calendar as CalendarIcon, Clock, DollarSign, CreditCard } from "lucide-react";
+import { Check, Calendar as CalendarIcon, Clock, DollarSign } from "lucide-react";
 import { format, addDays, isBefore, isAfter, startOfToday, parse } from "date-fns";
 import { useDoctor, useDoctorAvailability } from "@/hooks/useDoctors";
 import { useBookAppointment } from "@/hooks/useAppointments";
@@ -43,6 +43,11 @@ const BookAppointment = () => {
   const disabledDays = (date: Date) => {
     return isBefore(date, today) || isAfter(date, addDays(today, 30));
   };
+
+  // Reset selected time when date changes
+  useEffect(() => {
+    setSelectedTime(null);
+  }, [selectedDate]);
   
   const handleSubmit = () => {
     if (!doctorId || !selectedDate || !selectedTime || !user) {
@@ -99,6 +104,9 @@ const BookAppointment = () => {
                     src={doctor.image}
                     alt={doctor.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                    }}
                   />
                 </div>
                 <div>
@@ -124,7 +132,7 @@ const BookAppointment = () => {
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 disabled={disabledDays}
-                className="border rounded-md"
+                className="border rounded-md pointer-events-auto"
               />
             </CardContent>
           </Card>
@@ -141,10 +149,9 @@ const BookAppointment = () => {
             <CardContent>
               {isLoadingAvailability ? (
                 <div className="text-center py-4">Loading available times...</div>
-              ) : availability ? (
+              ) : availability && Array.isArray(availability) && availability.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Process available slots from the API */}
-                  {Array.isArray(availability) && availability.map((slot, index) => (
+                  {availability.map((slot, index) => (
                     <div key={index} className="space-y-2">
                       <h3 className="font-medium capitalize">{slot.day}</h3>
                       <div className="flex flex-wrap gap-2">
@@ -243,24 +250,6 @@ const BookAppointment = () => {
                 <div className="text-sm text-muted-foreground">Type</div>
                 <div>{consultationType}</div>
               </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <div className="text-sm">Consultation Fee</div>
-                  <div className="font-medium">${doctor.fee || 0}</div>
-                </div>
-                <div className="flex justify-between">
-                  <div className="text-sm">Platform Fee</div>
-                  <div className="font-medium">$5</div>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold">
-                  <div>Total</div>
-                  <div>${(doctor.fee || 0) + 5}</div>
-                </div>
-              </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button 
@@ -268,14 +257,7 @@ const BookAppointment = () => {
                 disabled={!selectedDate || !selectedTime || bookAppointment.isPending}
                 onClick={handleSubmit}
               >
-                {bookAppointment.isPending ? (
-                  "Processing..."
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Proceed to Payment
-                  </>
-                )}
+                {bookAppointment.isPending ? "Processing..." : "Book Appointment"}
               </Button>
               
               <p className="text-xs text-center text-muted-foreground">

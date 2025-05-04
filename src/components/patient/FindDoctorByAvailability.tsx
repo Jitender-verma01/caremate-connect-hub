@@ -84,7 +84,7 @@ export function FindDoctorByAvailability() {
               selected={selectedDate}
               onSelect={setSelectedDate}
               disabled={(date) => date < new Date() || date > addDays(new Date(), 30)}
-              className="border rounded-md"
+              className="border rounded-md pointer-events-auto"
             />
           </div>
           
@@ -146,26 +146,32 @@ export function FindDoctorByAvailability() {
                     <Card key={doctor.id} className="overflow-hidden">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-16 w-16 rounded-full overflow-hidden">
-                            <img 
-                              src={doctor.image || "/placeholder.svg"} 
-                              alt={doctor.name}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "/placeholder.svg";
-                              }}
-                            />
+                          <div className="h-16 w-16 rounded-full overflow-hidden bg-muted">
+                            {doctor.image ? (
+                              <img 
+                                src={doctor.image} 
+                                alt={doctor.name}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                }}
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-primary text-primary-foreground">
+                                {doctor.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
                           </div>
                           
                           <div className="flex-1">
-                            <h4 className="font-medium">{doctor.name}</h4>
-                            <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+                            <h4 className="font-medium">{doctor.name || "Unknown Doctor"}</h4>
+                            <p className="text-sm text-muted-foreground">{doctor.specialty || "General"}</p>
                             <div className="flex flex-wrap gap-2 mt-1">
                               <Badge variant="outline" className="text-xs">
-                                {doctor.experience} years exp
+                                {doctor.experience || 0} years exp
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                ${doctor.fee}/session
+                                ${doctor.fee || 0}/session
                               </Badge>
                             </div>
                           </div>
@@ -182,18 +188,20 @@ export function FindDoctorByAvailability() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
+                <div className="text-center py-8 border rounded-lg">
                   <User className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">
                     No doctors available for the selected criteria
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => setSpecialization('all')}
-                  >
-                    View All Specialties
-                  </Button>
+                  {specialization !== 'all' && (
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setSpecialization('all')}
+                    >
+                      View All Specialties
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

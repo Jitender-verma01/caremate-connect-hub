@@ -66,11 +66,11 @@ const DashboardLayout = () => {
         <Sidebar className="hidden md:flex">
           <SidebarHeader className="p-4 flex justify-center">
             <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
-              alt="CareMate Logo" 
-              className="h-8 w-8" 
-            />
+              <img 
+                src="/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
+                alt="CareMate Logo" 
+                className="h-8 w-8" 
+              />
               <span className="text-xl font-bold">CareMate</span>
             </Link>
           </SidebarHeader>
@@ -123,7 +123,15 @@ const DashboardLayout = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Avatar>
-                  {user?.profileImage && <AvatarImage src={user.profileImage} />}
+                  {user?.profileImage ? (
+                    <AvatarImage 
+                      src={user.profileImage} 
+                      alt={user.name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "";
+                      }}
+                    />
+                  ) : null}
                   <AvatarFallback>{getInitials()}</AvatarFallback>
                 </Avatar>
                 <div>
@@ -152,11 +160,11 @@ const DashboardLayout = () => {
                 {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </Button>
               <Link to="/" className="ml-2 flex items-center space-x-2">
-                <div className="bg-care-primary text-white p-1 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
+                <img 
+                  src="/lovable-uploads/fb497873-d154-4ea1-8f85-542123eda93d.png" 
+                  alt="CareMate Logo" 
+                  className="h-6 w-6" 
+                />
                 <span className="text-lg font-bold">CareMate</span>
               </Link>
             </div>
@@ -224,7 +232,15 @@ const DashboardLayout = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
                     <Avatar className="h-8 w-8">
-                      {user?.profileImage && <AvatarImage src={user.profileImage} />}
+                      {user?.profileImage ? (
+                        <AvatarImage 
+                          src={user.profileImage} 
+                          alt={user.name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "";
+                          }}
+                        />
+                      ) : null}
                       <AvatarFallback>{getInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
