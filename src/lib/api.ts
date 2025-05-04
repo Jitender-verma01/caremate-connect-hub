@@ -1,11 +1,10 @@
-
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
 const API_BASE_URL = "https://caremate-connect-hub.onrender.com/api/v1";
 
 // Common headers for API requests
-const defaultHeaders = {
+const defaultHeaders: Record<string, string> = {
   "Content-Type": "application/json",
 };
 
@@ -29,13 +28,13 @@ export const apiRequest = async (
   endpoint: string,
   method: string = "GET",
   data?: any,
-  customHeaders = {}
+  customHeaders: Record<string, string> = {}
 ) => {
   try {
     // Get auth token from localStorage
     const token = localStorage.getItem('caremate_auth_token');
     
-    const headers = {
+    const headers: Record<string, string> = {
       ...defaultHeaders,
       ...customHeaders,
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -48,9 +47,14 @@ export const apiRequest = async (
     };
 
     if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
-      // If data is FormData, don't stringify it
+      // If data is FormData, don't stringify it and remove Content-Type header
       if (data instanceof FormData) {
-        delete headers["Content-Type"];
+        const newHeaders = { ...headers };
+        // Use delete operator on a copied object property instead
+        if ('Content-Type' in newHeaders) {
+          delete newHeaders['Content-Type'];
+        }
+        config.headers = newHeaders;
         config.body = data;
       } else {
         config.body = JSON.stringify(data);
