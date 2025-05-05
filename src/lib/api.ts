@@ -227,7 +227,7 @@ export const api = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer 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`
+            'Authorization': `Bearer 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`
           },
           body: JSON.stringify({
             model: 'gpt-3.5-turbo',
