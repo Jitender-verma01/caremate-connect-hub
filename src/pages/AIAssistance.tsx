@@ -1,31 +1,36 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Send, Bot, User, RefreshCw } from "lucide-react";
+import { Bot, User, Send, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
-// Mock chat for demonstration
-const initialChat = [
-  { role: "assistant", content: "Hello! I'm your AI medical assistant. How can I help you today?" }
+// Define the message type
+interface ChatMessage {
+  role: "assistant" | "user";
+  content: string;
+}
+
+const initialChat: ChatMessage[] = [
+  { role: "assistant", content: "Hello! I'm your AI medical assistant powered by GPT-3.5. How can I help you today?" }
 ];
 
 const AIAssistance = () => {
-  const [chat, setChat] = useState(initialChat);
+  const [chat, setChat] = useState<ChatMessage[]>(initialChat);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
   const [loadingNewMessage, setLoadingNewMessage] = useState(false);
   const { toast } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Scroll to the bottom of the chat container whenever chat updates
   useEffect(() => {
-    const chatContainer = document.getElementById("chat-scroll-area");
-    if (chatContainer) {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [chat, loadingNewMessage]);
 
@@ -34,32 +39,21 @@ const AIAssistance = () => {
 
     // Add user message to chat
     setChat(prev => [...prev, { role: "user", content: userInput }]);
+    const currentInput = userInput;
+    setUserInput("");
     setLoadingNewMessage(true);
     
     try {
       setIsLoading(true);
+      setError(false);
       
-      // Simulate API call to Gemini or another AI service
-      // Replace this with actual API call
-      setTimeout(() => {
-        // Mock response
-        const responses = [
-          "Based on your symptoms, you might want to consult with a general practitioner first, who can refer you to a specialist if needed.",
-          "Those symptoms are common with seasonal allergies. I'd recommend seeing an allergist for proper testing and treatment.",
-          "That could be related to several conditions. A neurologist would be the appropriate specialist to consult in this case.",
-          "For that specific issue, I recommend consulting with a dermatologist who specializes in treating skin conditions.",
-        ];
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
-        setChat(prev => [...prev, { 
-          role: "assistant", 
-          content: randomResponse
-        }]);
-        setIsLoading(false);
-        setLoadingNewMessage(false);
-        setUserInput("");
-      }, 1500);
+      // Call the OpenAI API
+      const aiResponse = await api.openai.generateResponse(currentInput);
+      
+      setChat(prev => [...prev, { 
+        role: "assistant", 
+        content: aiResponse
+      }]);
       
     } catch (error) {
       console.error("Error sending message:", error);
@@ -69,6 +63,7 @@ const AIAssistance = () => {
         variant: "destructive",
       });
       setError(true);
+    } finally {
       setIsLoading(false);
       setLoadingNewMessage(false);
     }
@@ -98,7 +93,7 @@ const AIAssistance = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center">
               <Bot className="mr-2 h-5 w-5" /> 
-              AI Assistant
+              AI Assistant (Powered by GPT-3.5)
             </CardTitle>
             <CardDescription>
               Describe your symptoms or ask health-related questions
@@ -107,7 +102,7 @@ const AIAssistance = () => {
           
           <CardContent className="pb-0">
             <ScrollArea 
-              id="chat-scroll-area" 
+              ref={scrollAreaRef}
               className="h-[400px] pr-4"
             >
               <div className="space-y-4 pb-4">

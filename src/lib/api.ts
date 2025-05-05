@@ -217,5 +217,47 @@ export const api = {
     
     delete: (id: string) => 
       apiRequest(`/prescription/delete-prescription/${id}`, "DELETE")
+  },
+  
+  // OpenAI API
+  openai: {
+    generateResponse: async (message: string) => {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer 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`
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful medical assistant. Provide concise and accurate information about medical conditions, symptoms, and appropriate specialists to consult. Do not provide specific medical diagnoses or treatment recommendations.'
+              },
+              {
+                role: 'user',
+                content: message
+              }
+            ],
+            max_tokens: 300,
+            temperature: 0.7
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('OpenAI API error:', errorData);
+          throw new Error(errorData.error?.message || 'Failed to get response from AI');
+        }
+        
+        const data = await response.json();
+        return data.choices[0].message.content;
+      } catch (error) {
+        console.error('OpenAI request failed:', error);
+        throw error;
+      }
+    }
   }
 };
