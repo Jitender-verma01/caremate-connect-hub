@@ -48,12 +48,12 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
           // Transform API response to match our frontend format
           return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => ({
             id: doctor._id,
-            name: doctor.user_id?.name || "Unknown",
+            name: doctor.user_id?.name || "Unknown Doctor",
             specialty: doctor.specialization,
             image: doctor.profileImage || "/placeholder.svg",
             experience: doctor.experience || 0,
             fee: doctor.fees || 0,
-            rating: 4.7, // Default rating since the backend doesn't provide this yet
+            rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
             reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
           }));
         } else {
@@ -71,16 +71,19 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
           }
           
           // Transform API response to match our frontend format
-          return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => ({
-            id: doctor._id,
-            name: doctor.user_id?.name || "Unknown",
-            specialty: doctor.specialization,
-            image: doctor.profileImage || "/placeholder.svg",
-            experience: doctor.experience || 0,
-            fee: doctor.fees || 0,
-            rating: 4.7, // Default rating since the backend doesn't provide this yet
-            reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
-          }));
+          return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => {
+            console.log("Doctor data from API:", doctor);
+            return {
+              id: doctor._id,
+              name: doctor.user_id?.name || "Unknown Doctor",
+              specialty: doctor.specialization,
+              image: doctor.profileImage || "/placeholder.svg",
+              experience: doctor.experience || 0,
+              fee: doctor.fees || 0,
+              rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
+              reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
+            };
+          });
         }
       } catch (error) {
         console.error("Error fetching doctors:", error);
@@ -106,12 +109,12 @@ export const useDoctor = (id: string) => {
         const doctor = response.data;
         return {
           id: doctor._id,
-          name: doctor.user_id?.name || "Unknown",
+          name: doctor.user_id?.name || "Unknown Doctor",
           specialty: doctor.specialization,
           image: doctor.profileImage || "/placeholder.svg",
           experience: doctor.experience || 0,
           fee: doctor.fees || 0,
-          rating: 4.7, // Default rating since the backend doesn't provide this yet
+          rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
           reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
         };
       } catch (error) {

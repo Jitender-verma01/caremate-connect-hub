@@ -1,313 +1,216 @@
-// AIAssistance.tsx
-import { useState, useRef, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send, Bot, User, Clock, RefreshCw } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Send, Bot, User, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+// Mock chat for demonstration
+const initialChat = [
+  { role: "assistant", content: "Hello! I'm your AI medical assistant. How can I help you today?" }
+];
 
 const AIAssistance = () => {
-  const [input, setInput] = useState("");
+  const [chat, setChat] = useState(initialChat);
+  const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hello! I'm your healthcare assistant. How can I help you with your medical questions today?",
-      timestamp: new Date(),
-    },
-  ]);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState(false);
+  const [loadingNewMessage, setLoadingNewMessage] = useState(false);
+  const { toast } = useToast();
 
+  // Scroll to the bottom of the chat container whenever chat updates
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollArea = scrollAreaRef.current;
-      scrollArea.scrollTop = scrollArea.scrollHeight;
+    const chatContainer = document.getElementById("chat-scroll-area");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-  }, [conversationHistory]);
-
-  const API_KEY = "your_hugging_face_api_key"; // Replace with your Hugging Face API key
-  const API_URL = "https://api-inference.huggingface.co/models/gpt2"; // Model endpoint
+  }, [chat, loadingNewMessage]);
 
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
+    if (!userInput.trim()) return;
 
-    const userMessage: Message = {
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
-    setConversationHistory((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
+    // Add user message to chat
+    setChat(prev => [...prev, { role: "user", content: userInput }]);
+    setLoadingNewMessage(true);
+    
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`, // Use the API key for authorization
-        },
-        body: JSON.stringify({
-          inputs: input, // Send user input as the model's prompt
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data && data.choices && data.choices[0].text) {
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: data.choices[0].text, // Use the correct key for response text
-          timestamp: new Date(),
-        };
-
-        setConversationHistory((prev) => [...prev, assistantMessage]);
-      } else {
-        throw new Error("No valid response from the AI");
-      }
+      setIsLoading(true);
+      
+      // Simulate API call to Gemini or another AI service
+      // Replace this with actual API call
+      setTimeout(() => {
+        // Mock response
+        const responses = [
+          "Based on your symptoms, you might want to consult with a general practitioner first, who can refer you to a specialist if needed.",
+          "Those symptoms are common with seasonal allergies. I'd recommend seeing an allergist for proper testing and treatment.",
+          "That could be related to several conditions. A neurologist would be the appropriate specialist to consult in this case.",
+          "For that specific issue, I recommend consulting with a dermatologist who specializes in treating skin conditions.",
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        setChat(prev => [...prev, { 
+          role: "assistant", 
+          content: randomResponse
+        }]);
+        setIsLoading(false);
+        setLoadingNewMessage(false);
+        setUserInput("");
+      }, 1500);
+      
     } catch (error) {
-      console.error("Error fetching response:", error);
-      toast.error("Failed to get a response. Please try again.");
-
-      setConversationHistory((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "I'm having trouble responding right now. Please try again in a moment.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive",
+      });
+      setError(true);
       setIsLoading(false);
+      setLoadingNewMessage(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const clearConversation = () => {
-    setConversationHistory([
-      {
-        role: "assistant",
-        content:
-          "Hello! I'm your healthcare assistant. How can I help you with your medical questions today?",
-        timestamp: new Date(),
-      },
-    ]);
-    toast.success("Conversation cleared");
+  const resetChat = () => {
+    setChat(initialChat);
+    setError(false);
   };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const suggestedQuestions = [
-    "What are some ways to reduce stress?",
-    "How much exercise should I get weekly?",
-    "What causes headaches?",
-    "How can I improve my sleep quality?",
-    "What should I do for a fever?",
-  ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">AI Health Assistant</h1>
-          <p className="text-muted-foreground">
-            Get health guidance and suggestions for your wellness journey
-          </p>
-        </div>
-      </div>
+    <div className="container mx-auto py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-2">AI Medical Assistant</h1>
+        <p className="text-muted-foreground mb-6">
+          Get help understanding your symptoms and find the right specialist
+        </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Chat Section */}
-        <Card className="col-span-3 h-[calc(100vh-220px)]">
-          <CardHeader className="border-b bg-muted/40 px-6">
-            <div className="flex items-center">
-              <Avatar className="h-8 w-8 mr-3 bg-care-primary">
-                <AvatarFallback>
-                  <Bot size={18} />
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  CareMate AI
-                  <Badge
-                    variant="outline"
-                    className="ml-2 bg-care-primary/10 text-care-primary"
-                  >
-                    <Sparkles className="mr-1 h-3 w-3" />
-                    Gemini
-                  </Badge>
-                </CardTitle>
-                <CardDescription>Powered by Google Gemini</CardDescription>
-              </div>
-            </div>
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center">
+              <Bot className="mr-2 h-5 w-5" /> 
+              AI Assistant
+            </CardTitle>
+            <CardDescription>
+              Describe your symptoms or ask health-related questions
+            </CardDescription>
           </CardHeader>
-
-          <ScrollArea className="h-[calc(100%-10rem)]" ref={scrollAreaRef}>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                {conversationHistory.map((message, index) => (
-                  <div
+          
+          <CardContent className="pb-0">
+            <ScrollArea 
+              id="chat-scroll-area" 
+              className="h-[400px] pr-4"
+            >
+              <div className="space-y-4 pb-4">
+                {chat.map((message, index) => (
+                  <div 
                     key={index}
-                    className={`flex ${
-                      message.role === "user"
-                        ? "justify-end"
-                        : "justify-start"
-                    }`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`flex max-w-[80%] ${
-                        message.role === "user" ? "flex-row-reverse" : ""
+                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
                       }`}
                     >
-                      <Avatar
-                        className={`h-8 w-8 mt-0.5 ${
-                          message.role === "user"
-                            ? "ml-3 bg-care-secondary"
-                            : "mr-3 bg-care-primary"
-                        }`}
-                      >
-                        <AvatarFallback>
-                          {message.role === "user" ? (
-                            <User size={18} />
-                          ) : (
-                            <Bot size={18} />
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div
-                          className={`rounded-lg p-4 ${
-                            message.role === "user"
-                              ? "bg-care-secondary text-care-secondary-foreground"
-                              : "bg-muted"
-                          }`}
-                        >
-                          <div className="whitespace-pre-wrap">
-                            {message.content}
-                          </div>
-                        </div>
-                        <div
-                          className={`text-xs text-muted-foreground mt-1 flex items-center ${
-                            message.role === "user" ? "justify-end" : ""
-                          }`}
-                        >
-                          <Clock className="h-3 w-3 inline mr-1" />
-                          {formatTime(message.timestamp)}
-                        </div>
+                      <div className="flex items-start gap-2">
+                        {message.role === "assistant" ? (
+                          <Bot className="h-5 w-5 mt-1 shrink-0" />
+                        ) : (
+                          <User className="h-5 w-5 mt-1 shrink-0" />
+                        )}
+                        <div>{message.content}</div>
                       </div>
                     </div>
                   </div>
                 ))}
-
-                {isLoading && (
+                
+                {loadingNewMessage && (
                   <div className="flex justify-start">
-                    <div className="flex">
-                      <Avatar className="h-8 w-8 mt-0.5 mr-3 bg-care-primary">
-                        <AvatarFallback>
-                          <Bot size={18} />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="rounded-lg p-4 bg-muted">
-                        <div className="flex items-center space-x-2">
-                          <div className="h-2 w-2 bg-care-primary rounded-full animate-bounce"></div>
-                          <div className="h-2 w-2 bg-care-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                          <div className="h-2 w-2 bg-care-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    <div className="max-w-[80%] rounded-lg px-4 py-2 bg-muted">
+                      <div className="flex items-center gap-2">
+                        <Bot className="h-5 w-5 shrink-0" />
+                        <div className="flex space-x-2">
+                          <div className="h-2 w-2 rounded-full bg-foreground/30 animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="h-2 w-2 rounded-full bg-foreground/30 animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="h-2 w-2 rounded-full bg-foreground/30 animate-bounce"></div>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
+                
+                {error && (
+                  <div className="flex justify-center">
+                    <Card className="bg-destructive/10 w-full">
+                      <CardContent className="py-4 flex flex-col items-center">
+                        <p className="text-center text-sm text-destructive mb-2">
+                          Error connecting to the AI assistant
+                        </p>
+                        <Button 
+                          onClick={resetChat} 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center"
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Reset Chat
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </ScrollArea>
-
-          <CardFooter className="border-t p-4">
-            <div className="flex w-full items-center space-x-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={clearConversation}
-                disabled={isLoading}
-                className="flex-shrink-0"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
+            </ScrollArea>
+          </CardContent>
+          
+          <CardFooter className="pt-4">
+            <div className="flex w-full gap-2">
+              <Input
+                placeholder="Type your symptoms or questions..."
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your health question here..."
-                className="flex-1 min-h-[60px]"
                 disabled={isLoading}
+                className="flex-1"
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!input.trim() || isLoading}
-                className="flex-shrink-0"
+              <Button 
+                onClick={handleSendMessage} 
+                disabled={isLoading || !userInput.trim()}
               >
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="h-4 w-4 mr-2" />
                 Send
               </Button>
             </div>
           </CardFooter>
         </Card>
 
-        {/* Right Suggestions Sidebar */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Questions</CardTitle>
-              <CardDescription>
-                Try asking these to get started
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {suggestedQuestions.map((q, idx) => (
-                <Button
-                  key={idx}
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => setInput(q)}
-                >
-                  {q}
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>How this AI Assistant can help</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Understand your symptoms and suggest relevant specialists</li>
+              <li>Answer general health questions (not a substitute for medical advice)</li>
+              <li>Help you prepare for your doctor's appointment</li>
+              <li>Provide information about common medical conditions</li>
+            </ul>
+          </CardContent>
+          <CardFooter className="text-sm text-muted-foreground">
+            Note: This AI assistant provides general information only and is not a substitute for professional medical advice.
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

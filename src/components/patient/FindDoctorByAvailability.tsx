@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar as CalendarIcon, User, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const SPECIALIZATIONS = [
   "General Medicine",
@@ -146,32 +147,25 @@ export function FindDoctorByAvailability() {
                     <Card key={doctor.id} className="overflow-hidden">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-16 w-16 rounded-full overflow-hidden bg-muted">
-                            {doctor.image ? (
-                              <img 
-                                src={doctor.image} 
-                                alt={doctor.name}
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "/placeholder.svg";
-                                }}
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center bg-primary text-primary-foreground">
-                                {doctor.name.substring(0, 2).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage 
+                              src={doctor.image} 
+                              alt={doctor.name}
+                            />
+                            <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
+                              {doctor.name?.substring(0, 2).toUpperCase() || "DR"}
+                            </AvatarFallback>
+                          </Avatar>
                           
                           <div className="flex-1">
-                            <h4 className="font-medium">{doctor.name || "Unknown Doctor"}</h4>
-                            <p className="text-sm text-muted-foreground">{doctor.specialty || "General"}</p>
+                            <h4 className="font-medium">{doctor.name}</h4>
+                            <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
                             <div className="flex flex-wrap gap-2 mt-1">
                               <Badge variant="outline" className="text-xs">
-                                {doctor.experience || 0} years exp
+                                {doctor.experience} years exp
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                ${doctor.fee || 0}/session
+                                ${doctor.fee}/session
                               </Badge>
                             </div>
                           </div>

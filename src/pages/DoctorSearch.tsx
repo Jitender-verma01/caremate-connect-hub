@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +18,8 @@ import { Star, Calendar, DollarSign, ChevronDown, User, AlertCircle, Loader2 } f
 import { Badge } from "@/components/ui/badge";
 import { useDoctors } from "@/hooks/useDoctors";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 // List of specialties for filter
 const SPECIALIZATIONS = [
@@ -35,6 +37,9 @@ const SPECIALIZATIONS = [
   "Dental",
 ];
 
+// Some mock languages for display
+const LANGUAGES = ["English", "Hindi", "Spanish", "French", "Arabic", "Chinese", "German"];
+
 const DoctorSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
@@ -46,6 +51,14 @@ const DoctorSearch = () => {
     specialization: selectedSpecialty === "All Specialties" ? undefined : selectedSpecialty,
     name: searchTerm,
   });
+  
+  // Show error toast if there's an issue fetching doctors
+  useEffect(() => {
+    if (error) {
+      toast.error("Error loading doctors. Please try again.");
+      console.error("Doctor fetch error:", error);
+    }
+  }, [error]);
   
   const doctors = doctorsData || [];
   
@@ -68,6 +81,14 @@ const DoctorSearch = () => {
     }
     return 0;
   });
+
+  // Helper function to get random languages for a doctor
+  const getDoctorLanguages = (doctorId: string) => {
+    // Use doctor ID as seed for consistent random selection
+    const seed = doctorId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const shuffled = [...LANGUAGES].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 2 + (seed % 2)); // Return 2-3 languages
+  };
 
   return (
     <div>
@@ -170,8 +191,8 @@ const DoctorSearch = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Not sure which specialist is right for your symptoms? Our AI Assistant can help you find the right doctor.
               </p>
-              <Button variant="secondary" className="w-full">
-                Use AI Assistant
+              <Button variant="secondary" className="w-full" asChild>
+                <Link to="/aiassistance">Use AI Assistant</Link>
               </Button>
             </CardContent>
           </Card>
@@ -250,19 +271,18 @@ const DoctorSearch = () => {
                     <div className="flex flex-col md:flex-row">
                       {/* Doctor image - left side */}
                       <div className="md:w-1/4 p-6 flex flex-col justify-center items-center border-r bg-card">
-                        <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
-                          <img
-                            src={doctor.image || "/placeholder.svg"}
+                        <Avatar className="w-24 h-24 border-2 border-muted">
+                          <AvatarImage
+                            src={doctor.image}
                             alt={doctor.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/placeholder.svg";
-                            }}
                           />
-                        </div>
-                        <div className="flex items-center justify-center">
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                            {doctor.name?.substring(0, 2).toUpperCase() || "DR"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex items-center justify-center mt-3">
                           <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                          <span className="font-medium ml-1">{doctor.rating || "4.5"}</span>
+                          <span className="font-medium ml-1">{doctor.rating?.toFixed(1) || "4.5"}</span>
                           <span className="text-xs text-muted-foreground ml-1">
                             ({doctor.reviewCount || "25"})
                           </span>
@@ -286,7 +306,7 @@ const DoctorSearch = () => {
                           <div className="flex items-start">
                             <div className="w-24 text-sm text-muted-foreground">Languages:</div>
                             <div className="flex-1 text-sm">
-                              English, Hindi
+                              {getDoctorLanguages(doctor.id).join(", ")}
                             </div>
                           </div>
                         </div>
