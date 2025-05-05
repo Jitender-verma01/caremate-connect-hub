@@ -45,17 +45,22 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
             return [];
           }
           
+          console.log("Raw response from specialization endpoint:", response.data);
+          
           // Transform API response to match our frontend format
-          return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => ({
-            id: doctor._id,
-            name: doctor.user_id?.name || "Unknown Doctor",
-            specialty: doctor.specialization,
-            image: doctor.profileImage || "/placeholder.svg",
-            experience: doctor.experience || 0,
-            fee: doctor.fees || 0,
-            rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
-            reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
-          }));
+          return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => {
+            console.log("Processing doctor data:", doctor);
+            return {
+              id: doctor._id || "unknown-id",
+              name: doctor.user_id?.name || "Unknown Doctor",
+              specialty: doctor.specialization || "General",
+              image: doctor.profileImage || "/placeholder.svg",
+              experience: doctor.experience || 0,
+              fee: doctor.fees || 0,
+              rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
+              reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
+            };
+          });
         } else {
           // Use the getAll endpoint with any provided filters
           console.log("Using getAll endpoint with filters");
@@ -70,13 +75,25 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
             return [];
           }
           
+          console.log("Raw response from getAll endpoint:", response.data);
+          
           // Transform API response to match our frontend format
           return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => {
-            console.log("Doctor data from API:", doctor);
+            // Log the full doctor object for debugging
+            console.log("Processing doctor:", JSON.stringify(doctor, null, 2));
+            
+            // Check if user_id is null or undefined
+            let doctorName = "Unknown Doctor";
+            if (doctor.user_id && typeof doctor.user_id === 'object' && doctor.user_id.name) {
+              doctorName = doctor.user_id.name;
+            } else if (typeof doctor.user_id === 'string') {
+              doctorName = "Dr. " + doctor._id.substring(0, 5);
+            }
+
             return {
-              id: doctor._id,
-              name: doctor.user_id?.name || "Unknown Doctor",
-              specialty: doctor.specialization,
+              id: doctor._id || "unknown-id",
+              name: doctorName,
+              specialty: doctor.specialization || "General",
               image: doctor.profileImage || "/placeholder.svg",
               experience: doctor.experience || 0,
               fee: doctor.fees || 0,
@@ -107,10 +124,20 @@ export const useDoctor = (id: string) => {
         }
         
         const doctor = response.data;
+        console.log("Single doctor data:", JSON.stringify(doctor, null, 2));
+        
+        // Extract doctor name from user_id object if it exists
+        let doctorName = "Unknown Doctor";
+        if (doctor.user_id && typeof doctor.user_id === 'object' && doctor.user_id.name) {
+          doctorName = doctor.user_id.name;
+        } else if (typeof doctor.user_id === 'string') {
+          doctorName = "Dr. " + doctor._id.substring(0, 5);
+        }
+        
         return {
-          id: doctor._id,
-          name: doctor.user_id?.name || "Unknown Doctor",
-          specialty: doctor.specialization,
+          id: doctor._id || "unknown-id",
+          name: doctorName,
+          specialty: doctor.specialization || "General",
           image: doctor.profileImage || "/placeholder.svg",
           experience: doctor.experience || 0,
           fee: doctor.fees || 0,

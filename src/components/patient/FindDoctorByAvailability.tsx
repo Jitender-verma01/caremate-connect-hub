@@ -147,7 +147,7 @@ export function FindDoctorByAvailability() {
                     <Card key={doctor.id} className="overflow-hidden">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-16 w-16">
+                          <Avatar className="h-16 w-16 bg-primary/10">
                             <AvatarImage 
                               src={doctor.image} 
                               alt={doctor.name}
@@ -158,9 +158,9 @@ export function FindDoctorByAvailability() {
                           </Avatar>
                           
                           <div className="flex-1">
-                            <h4 className="font-medium">{doctor.name}</h4>
-                            <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
-                            <div className="flex flex-wrap gap-2 mt-1">
+                            <h4 className="font-medium text-lg">{doctor.name}</h4>
+                            <p className="text-sm text-primary/80">{doctor.specialty}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
                               <Badge variant="outline" className="text-xs">
                                 {doctor.experience} years exp
                               </Badge>
