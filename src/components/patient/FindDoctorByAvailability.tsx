@@ -25,6 +25,7 @@ import {
 import { Calendar as CalendarIcon, User, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SPECIALIZATIONS = [
   "General Medicine",
@@ -44,12 +45,16 @@ export function FindDoctorByAvailability() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [specialization, setSpecialization] = useState<string>("all");
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   
   const { data: doctors, isLoading, error, refetch } = useDoctors({
     specialization: specialization === 'all' ? undefined : specialization,
   });
+
+  // Check if user is a doctor
+  const isDoctor = user?.role === 'doctor';
 
   // If there's an error loading doctors, show a toast
   useEffect(() => {
@@ -149,8 +154,8 @@ export function FindDoctorByAvailability() {
                         <div className="flex items-center gap-4">
                           <Avatar className="h-16 w-16 bg-primary/10">
                             <AvatarImage 
-                              src={doctor.image} 
-                              alt={doctor.name}
+                              src={doctor.image || "/placeholder.svg"} 
+                              alt={doctor.name || "Doctor"}
                             />
                             <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
                               {doctor.name?.substring(0, 2).toUpperCase() || "DR"}
@@ -158,24 +163,26 @@ export function FindDoctorByAvailability() {
                           </Avatar>
                           
                           <div className="flex-1">
-                            <h4 className="font-medium text-lg">{doctor.name}</h4>
-                            <p className="text-sm text-primary/80">{doctor.specialty}</p>
+                            <h4 className="font-medium text-lg">{doctor.name || "Unknown Doctor"}</h4>
+                            <p className="text-sm text-primary/80">{doctor.specialty || "General"}</p>
                             <div className="flex flex-wrap gap-2 mt-2">
                               <Badge variant="outline" className="text-xs">
-                                {doctor.experience} years exp
+                                {doctor.experience || 0} years exp
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                ${doctor.fee}/session
+                                ${doctor.fee || 0}/session
                               </Badge>
                             </div>
                           </div>
                           
-                          <Button 
-                            onClick={() => handleBookAppointment(doctor.id)}
-                            className="whitespace-nowrap"
-                          >
-                            Book Now
-                          </Button>
+                          {!isDoctor && (
+                            <Button 
+                              onClick={() => handleBookAppointment(doctor.id)}
+                              className="whitespace-nowrap"
+                            >
+                              Book Now
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

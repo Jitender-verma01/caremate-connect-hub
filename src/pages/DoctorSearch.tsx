@@ -20,6 +20,7 @@ import { useDoctors } from "@/hooks/useDoctors";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 // List of specialties for filter
 const SPECIALIZATIONS = [
@@ -45,6 +46,7 @@ const DoctorSearch = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
   const [maxFee, setMaxFee] = useState(200);
   const [sortBy, setSortBy] = useState("rating");
+  const { user } = useAuth();
 
   // Fetch doctors using our hook
   const { data: doctorsData, isLoading, error, refetch } = useDoctors({
@@ -61,6 +63,7 @@ const DoctorSearch = () => {
   }, [error]);
   
   const doctors = doctorsData || [];
+  console.log("Doctors data in search component:", doctors);
   
   // Filter doctors based on fee
   const filteredDoctors = doctors.filter(doctor => {
@@ -81,7 +84,6 @@ const DoctorSearch = () => {
     }
     return 0;
   });
-  console.log("Sorted doctors:", sortedDoctors);
 
   // Helper function to get random languages for a doctor
   const getDoctorLanguages = (doctorId: string) => {
@@ -90,6 +92,9 @@ const DoctorSearch = () => {
     const shuffled = [...LANGUAGES].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 2 + (seed % 2)); // Return 2-3 languages
   };
+
+  // Check if user is a doctor
+  const isDoctor = user?.role === 'doctor';
 
   return (
     <div>
@@ -274,7 +279,7 @@ const DoctorSearch = () => {
                       <div className="md:w-1/4 p-6 flex flex-col justify-center items-center border-r bg-card">
                         <Avatar className="w-24 h-24 border-2 border-muted">
                           <AvatarImage
-                            src={doctor.image}
+                            src={doctor.image || "/placeholder.svg"}
                             alt={doctor.name}
                           />
                           <AvatarFallback className="bg-primary text-primary-foreground text-xl">
@@ -292,8 +297,8 @@ const DoctorSearch = () => {
                       
                       {/* Doctor info - middle */}
                       <div className="md:w-2/4 p-6">
-                        <h3 className="text-xl font-bold">{doctor.name}</h3>
-                        <p className="text-care-primary font-medium">{doctor.specialty}</p>
+                        <h3 className="text-xl font-bold">{doctor.name || "Unknown Doctor"}</h3>
+                        <p className="text-care-primary font-medium">{doctor.specialty || "General"}</p>
                         
                         <div className="mt-3 space-y-2">
                           <div className="flex items-start">
@@ -302,7 +307,7 @@ const DoctorSearch = () => {
                           </div>
                           <div className="flex items-start">
                             <div className="w-24 text-sm text-muted-foreground">Experience:</div>
-                            <div className="flex-1 text-sm">{doctor.experience} years</div>
+                            <div className="flex-1 text-sm">{doctor.experience || 0} years</div>
                           </div>
                           <div className="flex items-start">
                             <div className="w-24 text-sm text-muted-foreground">Languages:</div>
@@ -334,13 +339,15 @@ const DoctorSearch = () => {
                             <DollarSign className="h-4 w-4 mr-2 text-care-primary" />
                             <span>Consultation Fee:</span>
                           </div>
-                          <p className="font-medium text-lg">${doctor.fee}</p>
+                          <p className="font-medium text-lg">${doctor.fee || 0}</p>
                         </div>
                         
                         <div className="space-y-2 mt-4">
-                          <Button asChild className="w-full">
-                            <Link to={`/book-appointment/${doctor.id}`}>Book Appointment</Link>
-                          </Button>
+                          {!isDoctor && (
+                            <Button asChild className="w-full">
+                              <Link to={`/book-appointment/${doctor.id}`}>Book Appointment</Link>
+                            </Button>
+                          )}
                           <Button variant="outline" asChild className="w-full">
                             <Link to={`/doctors/${doctor.id}`}>View Profile</Link>
                           </Button>
