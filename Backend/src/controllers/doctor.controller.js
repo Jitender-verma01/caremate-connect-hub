@@ -9,7 +9,7 @@ const createDoctor = asyncHandler(async (req, res) => {
     const { specialization, fees, qualification, experience, about, languages } = req.body;
 
     // Validate required fields
-    if (!specialization || !qualification || !experience || !about || !languages || !Array.isArray(languages) || languages.length === 0) {
+    if (!specialization || !qualification || !experience || !about || !languages) {
         throw new ApiError(400, "All fields are required, including 'about' and at least one language");
     }
 
