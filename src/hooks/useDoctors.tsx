@@ -98,7 +98,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
 
             return {
               id: doctor._id || "unknown-id",
-              name: doctorName,
+              name: doctor.name,
               specialty: doctor.specialization || "General",
               image: doctor.profileImage || "/placeholder.svg",
               experience: doctor.experience || 0,
@@ -143,7 +143,7 @@ export const useDoctor = (id: string) => {
         
         return {
           id: doctor._id || "unknown-id",
-          name: doctorName,
+          name: doctor.name,
           specialty: doctor.specialization || "General",
           image: doctor.profileImage || "/placeholder.svg",
           qualification: doctor.qualification || "N/A",
