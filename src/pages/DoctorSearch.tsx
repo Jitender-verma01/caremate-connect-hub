@@ -44,7 +44,7 @@ const LANGUAGES = ["English", "Hindi", "Spanish", "French", "Arabic", "Chinese",
 const DoctorSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
-  const [maxFee, setMaxFee] = useState(200);
+  const [maxFee, setMaxFee] = useState(1000);
   const [sortBy, setSortBy] = useState("rating");
   const { user } = useAuth();
 
@@ -157,14 +157,14 @@ const DoctorSearch = () => {
                 <div className="space-y-2">
                   <Slider
                     defaultValue={[maxFee]}
-                    max={300}
+                    max={3000}
                     step={10}
                     onValueChange={(values) => setMaxFee(values[0])}
                   />
                   <div className="flex justify-between">
                     <span className="text-sm">$0</span>
                     <span className="text-sm font-medium">${maxFee}</span>
-                    <span className="text-sm">$300</span>
+                    <span className="text-sm">$3000</span>
                   </div>
                 </div>
               </div>

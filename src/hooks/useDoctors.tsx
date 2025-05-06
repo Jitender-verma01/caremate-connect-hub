@@ -9,8 +9,11 @@ export interface Doctor {
   specialty: string;
   image: string;
   experience: number;
+  qualification?: string;
   fee: number;
   rating?: number;
+  languages?: string;
+  about?: string;
   reviewCount?: number;
   available_time_slots?: Array<{
     day: string;
@@ -25,6 +28,7 @@ interface GetDoctorsParams {
   specialization?: string;
   name?: string;
   experience?: number;
+  minRating?: number;
 }
 
 // Hook to fetch doctors with optional filters
@@ -56,6 +60,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
               specialty: doctor.specialization || "General",
               image: doctor.profileImage || "/placeholder.svg",
               experience: doctor.experience || 0,
+              languages: doctor.languages || "N/A",
               fee: doctor.fees || 0,
               rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
               reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
@@ -67,7 +72,8 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
           const response = await api.doctors.getAll({
             specialization: params.specialization === "all" ? undefined : params.specialization,
             name: params.name,
-            experience: params.experience
+            experience: params.experience,
+            minRating: params.minRating
           });
           
           if (!response?.data) {
@@ -84,10 +90,10 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
             
             // Check if user_id is null or undefined
             let doctorName = "Unknown Doctor";
-            if (doctor.user_id && typeof doctor.user_id === 'object' && doctor.user_id.name) {
-              doctorName = doctor.user_id.name;
-            } else if (typeof doctor.user_id === 'string') {
-              doctorName = "Dr. " + doctor._id.substring(0, 5);
+            if (doctor.user_id && typeof doctor.user_id === 'object' && doctor.name) {
+              doctorName = doctor.name;
+            } else if (typeof doctor.name === 'string') {
+              doctorName = "Dr. " + doctor.name;
             }
 
             return {
@@ -96,6 +102,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
               specialty: doctor.specialization || "General",
               image: doctor.profileImage || "/placeholder.svg",
               experience: doctor.experience || 0,
+              languages: doctor.languages || "N/A",
               fee: doctor.fees || 0,
               rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
               reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
@@ -128,10 +135,10 @@ export const useDoctor = (id: string) => {
         
         // Extract doctor name from user_id object if it exists
         let doctorName = "Unknown Doctor";
-        if (doctor.user_id && typeof doctor.user_id === 'object' && doctor.user_id.name) {
-          doctorName = doctor.user_id.name;
+        if (doctor.user_id && typeof doctor.user_id === 'object' && doctor.name) {
+          doctorName = doctor.name;
         } else if (typeof doctor.user_id === 'string') {
-          doctorName = "Dr. " + doctor._id.substring(0, 5);
+          doctorName = "Dr. " + doctor.name;
         }
         
         return {
@@ -139,8 +146,12 @@ export const useDoctor = (id: string) => {
           name: doctorName,
           specialty: doctor.specialization || "General",
           image: doctor.profileImage || "/placeholder.svg",
+          qualification: doctor.qualification || "N/A",
+          about: doctor.about || "N/A",
+          languages: doctor.languages || "N/A",
           experience: doctor.experience || 0,
           fee: doctor.fees || 0,
+          available_time_slots: doctor.available_time_slots || [],
           rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
           reviewCount: Math.floor(Math.random() * 100) + 20, // Random review count for demo
         };

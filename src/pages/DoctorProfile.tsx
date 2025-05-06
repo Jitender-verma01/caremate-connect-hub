@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, DollarSign, Clock, MapPin, Phone, Mail, FileText, MessageSquare } from "lucide-react";
+import { useDoctor } from "@/hooks/useDoctors";
 
 // Mock doctor data - in a real app, fetch this from API based on ID
 const mockDoctor = {
@@ -16,13 +17,13 @@ const mockDoctor = {
   reviewCount: 124,
   experience: 12,
   fee: 150,
-  education: "Stanford University Medical School",
+  qualifications: "Stanford University Medical School",
   address: "123 Medical Center Dr, San Francisco, CA",
   phone: "+1 (555) 123-4567",
   email: "dr.chen@caremate.com",
   about: "Dr. Robert Chen is a board-certified cardiologist with over 12 years of experience in treating cardiovascular diseases. He specializes in preventive cardiology, heart failure management, and cardiac imaging. Dr. Chen completed his fellowship at Stanford Medical Center and has published numerous research papers in leading medical journals.",
   languages: ["English", "Mandarin"],
-  availability: {
+  available_time_slots: {
     monday: ["9:00 AM - 1:00 PM", "2:00 PM - 5:00 PM"],
     tuesday: ["9:00 AM - 1:00 PM", "2:00 PM - 5:00 PM"],
     wednesday: ["9:00 AM - 1:00 PM"],
@@ -61,8 +62,9 @@ const DoctorProfile = () => {
   // In a real app, fetch doctor data based on ID
   // const { data: doctor, isLoading } = useQuery({ queryKey: ['doctor', id], queryFn: () => fetchDoctor(id) });
   
-  const doctor = mockDoctor; // Using mock data for now
-
+  const {data: doctorData, isLoading} = useDoctor(id || "");
+  
+  const doctor = doctorData || mockDoctor; // Using mock data for now
   const renderStars = (rating: number) => {
     return Array(5).fill(0).map((_, index) => (
       <Star 
@@ -127,19 +129,17 @@ const DoctorProfile = () => {
                   
                   <div>
                     <h2 className="text-lg font-medium mb-2">Education</h2>
-                    <p>{doctor.education}</p>
+                    <p>{(doctor as any).qualification}</p>
                   </div>
                   
                   <div>
                     <h2 className="text-lg font-medium mb-2">Languages</h2>
                     <div className="flex flex-wrap gap-2">
-                      {doctor.languages.map((language, index) => (
-                        <Badge key={index} variant="outline">{language}</Badge>
-                      ))}
+                      {doctor.languages}
                     </div>
                   </div>
                   
-                  <div className="space-y-3">
+                  {/* <div className="space-y-3">
                     <h2 className="text-lg font-medium">Contact Information</h2>
                     <div className="flex items-start">
                       <MapPin className="w-5 h-5 mr-3 text-care-primary" />
@@ -153,30 +153,37 @@ const DoctorProfile = () => {
                       <Mail className="w-5 h-5 mr-3 text-care-primary" />
                       <span>{doctor.email}</span>
                     </div>
-                  </div>
+                  </div> */}
                 </TabsContent>
                 
                 <TabsContent value="schedule">
                   <h2 className="text-lg font-medium mb-4">Weekly Schedule</h2>
-                  <div className="space-y-4">
-                    {Object.entries(doctor.availability).map(([day, slots]) => (
-                      <div key={day} className="flex border-b pb-3 last:border-0">
-                        <div className="w-1/3 font-medium capitalize">{day}</div>
-                        <div className="w-2/3">
-                          {slots.length > 0 ? (
-                            slots.map((slot, index) => (
-                              <div key={index} className="flex items-center mb-1 last:mb-0">
-                                <Clock className="w-4 h-4 mr-2 text-care-primary" />
-                                <span>{slot}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <span className="text-muted-foreground">Not available</span>
-                          )}
+                  {doctor.available_time_slots && doctor.available_time_slots.length > 0 ? (
+                    <div className="space-y-4">
+                      {doctor.available_time_slots.map((slot, index) => (
+                        <div key={index} className="flex border-b pb-3 last:border-0">
+                          <div className="w-1/3 font-medium capitalize">{slot.day}</div>
+                          <div className="w-2/3">
+                            <div className="flex flex-wrap gap-2">
+                              {slot.times.map((time, timeIndex) => (
+                                <span 
+                                  key={timeIndex} 
+                                  className={`px-3 py-1 text-sm rounded-full ${
+                                    time.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  <Clock className="w-4 h-4 mr-2 text-care-primary" />
+                                  {time.time} ({time.status})
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">No availability slots set up yet.</p>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="reviews">
@@ -193,7 +200,7 @@ const DoctorProfile = () => {
                     </div>
                   </div>
                   
-                  <div className="space-y-6">
+                  {/* <div className="space-y-6">
                     {doctor.reviews.map(review => (
                       <div key={review.id} className="border-b pb-4 last:border-0">
                         <div className="flex items-center justify-between mb-2">
@@ -208,7 +215,7 @@ const DoctorProfile = () => {
                         <p className="text-muted-foreground">{review.comment}</p>
                       </div>
                     ))}
-                  </div>
+                  </div> */}
                 </TabsContent>
               </Tabs>
             </div>

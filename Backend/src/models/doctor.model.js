@@ -33,6 +33,14 @@ const doctorSchema = new Schema({
         type: Number,
         required: true 
     },
+    about: {
+        type: String,
+        required: true
+    },
+    languages: {
+        type: String,
+        required: true
+    },
     available_time_slots: {
         type: [{
             day: { type: String, required: true },

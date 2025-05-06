@@ -31,6 +31,8 @@ const doctorProfileSchema = z.object({
   fees: z.string().refine((val) => !isNaN(Number(val)), { message: "Fees must be a valid number" }),
   qualification: z.string().min(1, { message: "Qualification is required" }),
   experience: z.string().refine((val) => !isNaN(Number(val)), { message: "Experience must be a valid number" }),
+  about: z.string().min(1, { message: "About is required" }),
+  languages: z.string().min(1, { message: "At least one language is required" }),
 });
 
 type DoctorProfileFormValues = z.infer<typeof doctorProfileSchema>;
@@ -50,7 +52,7 @@ export function DoctorProfileForm({
   );
 
   console.log("Existing doctor profile for form:", existingProfile);
-
+  const Mlanguages = ["English", "Spanish", "French", "German", "Italian"];
   const form = useForm<DoctorProfileFormValues>({
     resolver: zodResolver(doctorProfileSchema),
     defaultValues: {
@@ -58,63 +60,69 @@ export function DoctorProfileForm({
       fees: existingProfile?.fees ? String(existingProfile.fees) : "",
       qualification: existingProfile?.qualification || "",
       experience: existingProfile?.experience ? String(existingProfile.experience) : "",
+      about: existingProfile?.about || "",
+      languages: existingProfile?.languages || "",
     },
   });
 
-  const onSubmit = async (data: DoctorProfileFormValues) => {
-    setIsSubmitting(true);
+const onSubmit = async (data: DoctorProfileFormValues) => {
+  setIsSubmitting(true);
 
-    try {
-      console.log("Submitting doctor profile data:", data);
+  try {
+    console.log("Submitting doctor profile data:", data);
+    
+    if (existingProfile) {
+      // Update existing profile
+      const updateResponse = await api.doctors.updateDoctorProfile({
+        specialization: data.specialization,
+        fees: Number(data.fees),
+        qualification: data.qualification,
+        experience: Number(data.experience),
+        about: data.about,
+        languages: data.languages,
+      });
       
-      if (existingProfile) {
-        // Update existing profile
-        const updateResponse = await api.doctors.updateDoctorProfile({
-          specialization: data.specialization,
-          fees: Number(data.fees),
-          qualification: data.qualification,
-          experience: Number(data.experience),
-        });
-        
-        console.log("Profile update response:", updateResponse);
+      console.log("Profile update response:", updateResponse);
 
-        // If there's a new profile image, update it separately
-        if (data.profileImage) {
-          const imageFormData = new FormData();
-          imageFormData.append("profileImage", data.profileImage);
-          const imageResponse = await api.doctors.updateProfileImage(imageFormData);
-          console.log("Image update response:", imageResponse);
-        }
-
-        toast.success("Doctor profile updated successfully!");
-      } else {
-        // Create new profile
-        // Create FormData for file upload
-        const formData = new FormData();
-        if (data.profileImage) {
-          formData.append("profileImage", data.profileImage);
-        }
-        formData.append("specialization", data.specialization);
-        formData.append("fees", data.fees);
-        formData.append("qualification", data.qualification);
-        formData.append("experience", data.experience);
-        
-        const createResponse = await api.doctors.createDoctor(formData);
-        console.log("Profile creation response:", createResponse);
-        
-        toast.success("Doctor profile created successfully!");
+      // If there's a new profile image, update it separately
+      if (data.profileImage) {
+        const imageFormData = new FormData();
+        imageFormData.append("profileImage", data.profileImage);
+        const imageResponse = await api.doctors.updateProfileImage(imageFormData);
+        console.log("Image update response:", imageResponse);
       }
 
-      if (onSuccess) {
-        onSuccess();
+      toast.success("Doctor profile updated successfully!");
+    } else {
+      // Create new profile
+      // Create FormData for file upload
+      const formData = new FormData();
+      if (data.profileImage) {
+        formData.append("profileImage", data.profileImage);
       }
-    } catch (error) {
-      console.error("Failed to save doctor profile:", error);
-      toast.error("Failed to save doctor profile. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      formData.append("specialization", data.specialization);
+      formData.append("fees", data.fees);
+      formData.append("qualification", data.qualification);
+      formData.append("experience", data.experience);
+      formData.append("about", data.about);
+      formData.append("languages", data.languages); // Note: You might need to stringify the languages array here
+
+      const createResponse = await api.doctors.createDoctor(formData);
+      console.log("Profile creation response:", createResponse);
+      
+      toast.success("Doctor profile created successfully!");
     }
-  };
+
+    if (onSuccess) {
+      onSuccess();
+    }
+  } catch (error) {
+    console.error("Failed to save doctor profile:", error);
+    toast.error("Failed to save doctor profile. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -247,6 +255,50 @@ export function DoctorProfileForm({
               </FormItem>
             )}
           />
+
+<FormField
+  control={form.control}
+  name="about"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>About *</FormLabel>
+      <Textarea
+        {...field}
+        className="w-full"
+        placeholder="Tell us a little about yourself"
+      />
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+<FormField
+  control={form.control}
+  name="languages"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Languages *</FormLabel>
+      <Select
+        onValueChange={field.onChange}
+        defaultValue={field.value}
+      >
+        <FormControl>
+          <SelectTrigger>
+            <SelectValue placeholder="Select languages" />
+          </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+          {Mlanguages.map((language) => (
+            <SelectItem key={language} value={language}>
+              {language}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
         </div>
 
         <Button type="submit" disabled={isSubmitting}>

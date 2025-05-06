@@ -526,6 +526,10 @@ const DoctorProfileSection = ({ doctor, isLoading, onUpdate }: { doctor: any; is
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <h3 className="font-medium text-sm text-muted-foreground">About</h3>
+                <p>{doctor.about || 'N/A'}</p>
+              </div>
+              <div>
                 <h3 className="font-medium text-sm text-muted-foreground">Specialization</h3>
                 <p>{doctor.specialization || 'N/A'}</p>
               </div>
@@ -540,6 +544,10 @@ const DoctorProfileSection = ({ doctor, isLoading, onUpdate }: { doctor: any; is
               <div>
                 <h3 className="font-medium text-sm text-muted-foreground">Consultation Fee</h3>
                 <p>{doctor.fees ? `₹${doctor.fees}` : 'N/A'}</p>
+              </div>
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground">Languages</h3>
+                {doctor?.languages}
               </div>
               <div>
                 <h3 className="font-medium text-sm text-muted-foreground">Status</h3>

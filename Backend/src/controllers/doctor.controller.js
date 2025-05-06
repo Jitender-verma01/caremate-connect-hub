@@ -6,9 +6,11 @@ import { ApiError } from "../utils/ApiError.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const createDoctor = asyncHandler(async (req, res) => {
-    const { specialization, fees, qualification, experience, } = req.body;
-    if (!specialization || !qualification || !experience) {
-        throw new ApiError(400, "All fields are required")
+    const { specialization, fees, qualification, experience, about, languages } = req.body;
+
+    // Validate required fields
+    if (!specialization || !qualification || !experience || !about || !languages || !Array.isArray(languages) || languages.length === 0) {
+        throw new ApiError(400, "All fields are required, including 'about' and at least one language");
     }
 
     const profileImageLocalPath = req.file?.path;
@@ -20,7 +22,9 @@ const createDoctor = asyncHandler(async (req, res) => {
         specialization,
         fees,
         qualification,
-        experience
+        experience,
+        about,
+        languages
     });
 
     const createdDoctor = await Doctor.findById(doctor._id).populate({
@@ -29,10 +33,10 @@ const createDoctor = asyncHandler(async (req, res) => {
     });
 
     if (!createdDoctor) {
-        throw new ApiError(500, "Something went wrong while creating doctor")
+        throw new ApiError(500, "Something went wrong while creating doctor");
     }
 
-    return res.status(201).json(new ApiResponse(201, createdDoctor, "Doctor created Successfully"));
+    return res.status(201).json(new ApiResponse(201, createdDoctor, "Doctor created successfully"));
 });
 
 const getDoctorById = asyncHandler(async (req, res) => {
@@ -52,7 +56,12 @@ const getDoctorById = asyncHandler(async (req, res) => {
 });
 
 const updateDoctorProfile = asyncHandler(async (req, res) => {
-    const { specialization, fees, qualification, experience } = req.body;
+    const { specialization, fees, qualification, experience, about, languages } = req.body;
+
+    // Optional: throw if any required field is missing
+    if (!specialization || !qualification || !experience || !about || !languages) {
+        throw new ApiError(400, "All fields are required to update the profile");
+    }
 
     const doctor = await Doctor.findOneAndUpdate(
         { user_id: req?.user._id },
@@ -60,8 +69,14 @@ const updateDoctorProfile = asyncHandler(async (req, res) => {
             specialization,
             fees,
             qualification,
-            experience
-        }    
+            experience,
+            about,
+            languages
+        },
+        {
+            new: true, // returns the updated doc
+            runValidators: true // make sure it respects schema rules
+        }
     ).populate({
         path: 'user_id',
         select: '-password -refreshToken'
@@ -280,6 +295,7 @@ const getDoctors = asyncHandler(async (req, res) => {
                 specialization: 1,
                 qualification: 1,
                 experience: 1,
+                languages: 1,
                 fees: 1,
                 available_time_slots: 1,
                 avgRating: 1
