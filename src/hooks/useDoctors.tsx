@@ -52,7 +52,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
             console.log("Processing doctor data:", doctor);
             return {
               id: doctor._id || "unknown-id",
-              name: doctor.user_id?.name || "Unknown Doctor",
+              name: doctor.name || "Unknown Doctor",
               specialty: doctor.specialization || "General",
               image: doctor.profileImage || "/placeholder.svg",
               experience: doctor.experience || 0,

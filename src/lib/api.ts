@@ -112,11 +112,13 @@ export const api = {
   
   // Doctors endpoints
   doctors: {
-    getAll: (params?: { specialization?: string; name?: string; experience?: number }) => {
+    getAll: (params?: { specialization?: string; name?: string; experience?: number ; minRating?: number; available_time_slots?: string }) => {
       const queryParams = new URLSearchParams();
       if (params?.specialization) queryParams.append('specialization', params.specialization);
       if (params?.name) queryParams.append('name', params.name);
       if (params?.experience) queryParams.append('experience', params.experience.toString());
+      if (params?.minRating) queryParams.append('minRating', params.minRating.toString());
+      if (params?.available_time_slots) queryParams.append('available_time_slots', params.available_time_slots);
       
       const queryString = queryParams.toString();
       return apiRequest(`/doctor/all-doctors${queryString ? `?${queryString}` : ''}`);
