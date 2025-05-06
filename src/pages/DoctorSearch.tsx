@@ -81,6 +81,7 @@ const DoctorSearch = () => {
     }
     return 0;
   });
+  console.log("Sorted doctors:", sortedDoctors);
 
   // Helper function to get random languages for a doctor
   const getDoctorLanguages = (doctorId: string) => {

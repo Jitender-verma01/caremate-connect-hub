@@ -230,14 +230,27 @@ const getAvailableSlotsForDoctor = asyncHandler(async (req, res) => {
 });
 
 const getDoctors = asyncHandler(async (req, res) => {
-    const {specialization, experience, available_time_slots, name, minRating} = req.query;
+    const { specialization, experience, available_time_slots, name, minRating } = req.query;
 
     const pipeline = [
         {
             $match: {
-                ...(specialization ? { specialization } : { } ),
-                ...(name ? { name: { $regex: new RegExp(name, 'i') } } : { } ),
+                ...(specialization ? { specialization } : {}),
                 status: "active",
+            }
+        },
+        {
+            $lookup: {
+                from: 'users', // assuming doctor names are stored in the users collection
+                localField: 'user_id',
+                foreignField: '_id',
+                as: 'user'
+            }
+        },
+        {
+            $unwind: {
+                path: '$user',
+                preserveNullAndEmptyArrays: true
             }
         },
         {
@@ -249,23 +262,31 @@ const getDoctors = asyncHandler(async (req, res) => {
             }
         },
         {
-            $unwind: {
-                path: '$ratings',
-                preserveNullAndEmptyArrays: true
+            $addFields: {
+                avgRating: { $avg: "$ratings.rating" }
             }
         },
         {
-            $group: {
-                _id: "$_id",
-                name: { $first: "$name" },
-                specialization: { $first: "$specialization" },
-                experience: { $first: "$experience" },
-                status: { $first: "$status" },
-                available_time_slots: { $first: "$available_time_slots" },
-                avgRating: { $avg: "$ratings.rating" },
+            $match: {
+                ...(name ? { "user.name": { $regex: new RegExp(name, 'i') } } : {})
             }
         },
-    ]
+        {
+            $project: {
+                _id: 1,
+                user_id: 1,
+                name: "$user.name",
+                profileImage: 1,
+                specialization: 1,
+                qualification: 1,
+                experience: 1,
+                fees: 1,
+                available_time_slots: 1,
+                avgRating: 1
+            }
+        }
+    ];
+
     if (minRating) {
         pipeline.push({
             $match: {
@@ -282,24 +303,23 @@ const getDoctors = asyncHandler(async (req, res) => {
         });
     }
 
-    // Filter by available time slot if provided
     if (available_time_slots) {
         pipeline.push({
             $match: {
-                "available_time_slots.time": available_time_slots
+                "available_time_slots.times.time": available_time_slots
             }
         });
     }
 
     const doctors = await Doctor.aggregate(pipeline);
 
-    // FIX: This conditional was wrong - it was throwing an error when doctors were found!
     if (!doctors || doctors.length === 0) {
         throw new ApiError(404, "No doctors found");
     }
 
     return res.status(200).json(new ApiResponse(200, doctors, "Doctors Found"));
 });
+
 
 export { 
     createDoctor,
