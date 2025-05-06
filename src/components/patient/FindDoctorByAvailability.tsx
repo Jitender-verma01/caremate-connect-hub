@@ -49,9 +49,15 @@ export function FindDoctorByAvailability() {
   
   const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   
-  const { data: doctors, isLoading, error, refetch } = useDoctors({
+  // Set query params correctly to match the updated useDoctors hook
+  const { data: doctorsData, isLoading, error, refetch } = useDoctors({
     specialization: specialization === 'all' ? undefined : specialization,
   });
+
+  // Log the actual doctors data to debug
+  useEffect(() => {
+    console.log("Doctors data in FindDoctorByAvailability:", doctorsData);
+  }, [doctorsData]);
 
   // Check if user is a doctor
   const isDoctor = user?.role === 'doctor';
@@ -72,6 +78,9 @@ export function FindDoctorByAvailability() {
   const handleSpecializationChange = (value: string) => {
     setSpecialization(value);
   };
+
+  // Make sure we have an array of doctors to work with
+  const doctors = doctorsData || [];
 
   return (
     <Card className="w-full">
@@ -154,7 +163,7 @@ export function FindDoctorByAvailability() {
                         <div className="flex items-center gap-4">
                           <Avatar className="h-16 w-16 bg-primary/10">
                             <AvatarImage 
-                              src={doctor.image || "/placeholder.svg"} 
+                              src={doctor.image} 
                               alt={doctor.name || "Doctor"}
                             />
                             <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
