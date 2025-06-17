@@ -9,9 +9,9 @@ import { getDayOfWeek } from "../utils/getdayofweek.js";
 
 
 const createAppointment = asyncHandler(async (req, res) => {
-    const { doctorId, patientId, date, time, reason } = req.body;
+    const { doctorId, patientId, date, time, reason, consultationType } = req.body;
 
-    if (!doctorId || !patientId || !date || !time) {
+    if (!doctorId || !patientId || !date || !time || !consultationType) {
         throw new ApiError(400, "All required fields must be provided");
     }
 
@@ -44,10 +44,8 @@ const createAppointment = asyncHandler(async (req, res) => {
         patientId,
         roomId: uuidv4(),
         appointmentDate: new Date(date),
-        timeSlot: { 
-            day: dayOfWeek, 
-            time 
-        },
+        consultationType,
+        timeSlot: `${dayOfWeek} ${time}`,
         reason: reason || "General consultation",
         status: "scheduled"
     });

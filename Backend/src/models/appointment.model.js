@@ -20,6 +20,10 @@ const appointmentSchema = new Schema({
         type: Date,
         required: true
     },
+    consultationType: {
+        type: String,
+        required: true
+    },
     timeSlot: {
         type: String,
         required: true // Format: "10:00 AM"
