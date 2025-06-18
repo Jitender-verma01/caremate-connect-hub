@@ -9,7 +9,11 @@ export const socket = io(API_BASE_URL, {
   autoConnect: false,
   transports: ['websocket', 'polling'],
   timeout: 20000,
-  forceNew: true
+  forceNew: false, // Changed to false to reuse connections
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  maxReconnectionAttempts: 5
 });
 
 // Add connection event listeners for debugging
@@ -38,16 +42,43 @@ export const setupSocketAuth = (token: string | null) => {
   if (token) {
     socket.auth = { token };
   } else {
-    // Reset auth by creating a new socket instance or clearing the property properly
     (socket as any).auth = undefined;
   }
 };
 
 // Helper function to ensure socket is connected
 export const ensureSocketConnection = () => {
-  if (!socket.connected) {
+  return new Promise<void>((resolve, reject) => {
+    if (socket.connected) {
+      resolve();
+      return;
+    }
+
+    // Set up one-time listeners
+    const onConnect = () => {
+      socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
+      resolve();
+    };
+
+    const onConnectError = (error: Error) => {
+      socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
+      reject(error);
+    };
+
+    socket.on('connect', onConnect);
+    socket.on('connect_error', onConnectError);
+
     socket.connect();
-  }
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
+      reject(new Error('Socket connection timeout'));
+    }, 10000);
+  });
 };
 
 // Helper function to disconnect socket

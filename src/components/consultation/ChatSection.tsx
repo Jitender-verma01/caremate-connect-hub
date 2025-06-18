@@ -48,17 +48,28 @@ export const ChatSection = ({
     if (!roomId) return;
 
     const handleReceiveMessage = (message: Message) => {
-      console.log('Received message:', message);
+      console.log('Received message via socket:', message);
+      
       setMessages((prev) => {
         // Check if message already exists to avoid duplicates
-        if (prev.some(m => m.id === message.id)) {
+        const exists = prev.some(m => m.id === message.id);
+        if (exists) {
+          console.log('Message already exists, not adding duplicate');
           return prev;
         }
+        
+        console.log('Adding new message to chat');
         return [...prev, message];
       });
     };
 
+    // Clean up any existing listeners
+    socket.off("receive-message");
+    
+    // Add new listener
     socket.on("receive-message", handleReceiveMessage);
+
+    console.log('Chat socket listener setup for room:', roomId);
 
     return () => {
       socket.off("receive-message", handleReceiveMessage);
@@ -67,19 +78,22 @@ export const ChatSection = ({
 
   // Send message
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !roomId) return;
+    if (!newMessage.trim() || !roomId) {
+      console.log('Cannot send empty message or no room ID');
+      return;
+    }
 
     const message: Message = {
-      id: `msg-${Date.now()}-${Math.random()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       sender: userRole,
       senderName: userName,
       text: newMessage.trim(),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    console.log('Sending message:', message);
+    console.log('Sending message to room:', roomId, message);
     
-    // Send to server (server will broadcast to all including sender)
+    // Send to server
     socket.emit("send-message", roomId, message);
     
     setNewMessage("");
@@ -102,6 +116,7 @@ export const ChatSection = ({
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
                       <p>No messages yet. Start the conversation!</p>
+                      <p className="text-xs mt-2">Room: {roomId}</p>
                     </div>
                   ) : (
                     messages.map(msg => (
