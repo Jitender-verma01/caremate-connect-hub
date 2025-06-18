@@ -5,7 +5,7 @@ import { Appointment } from '../models/appointment.model.js';
 export const initializeSignaling = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: process.env.CORS_ORIGIN, // Update with your frontend URL
+      origin: process.env.CORS_ORIGIN,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     },
   });
@@ -15,21 +15,34 @@ export const initializeSignaling = (server) => {
 
     // Helper function for appointment validation
     const validateAppointment = async (roomId, userId) => {
-      const appointment = await Appointment.findOne({ roomId });
+      const appointment = await Appointment.findOne({ roomId }).populate([
+        { path: 'patientId', populate: { path: 'user_id' } },
+        { path: 'doctorId', populate: { path: 'user_id' } }
+      ]);
+      
       if (!appointment) return { error: 'Appointment not found', appointment: null };
 
-      const { patientId, doctorId, appointmentDate, timeSlot } = appointment;
+      const { patientId, doctorId, appointmentDate } = appointment;
       const now = new Date();
 
-      // Validate user access
-      if (userId !== String(patientId) && userId !== String(doctorId)) {
-        return { error: 'Unauthorized access', appointment: null };
+      // Get the actual user IDs from populated data
+      const actualPatientUserId = patientId.user_id._id.toString();
+      const actualDoctorUserId = doctorId.user_id._id.toString();
+
+      console.log('Validating access for user:', userId);
+      console.log('Patient user ID:', actualPatientUserId);
+      console.log('Doctor user ID:', actualDoctorUserId);
+
+      // Validate user access - check against actual user IDs
+      if (userId !== actualPatientUserId && userId !== actualDoctorUserId) {
+        console.log('Access denied: User not authorized for this appointment');
+        return { error: 'Unauthorized access to this appointment', appointment: null };
       }
 
-      // Check if appointment time is valid (allow joining 15 minutes before and 1 hour after)
+      // Check if appointment time is valid (allow joining 15 minutes before and 2 hours after)
       const appointmentDateTime = new Date(appointmentDate);
       const bufferTime = 15 * 60 * 1000; // 15 minutes in milliseconds
-      const sessionDuration = 60 * 60 * 1000; // 1 hour in milliseconds
+      const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 
       if (now < new Date(appointmentDateTime.getTime() - bufferTime)) {
         return { error: 'Session has not started yet', appointment: null };
@@ -48,11 +61,12 @@ export const initializeSignaling = (server) => {
         
         const { error, appointment } = await validateAppointment(roomId, userId);
         if (error) {
+          console.log('Validation error:', error);
           socket.emit('error', error);
           return;
         }
 
-        console.log(`${userId} joined room ${roomId}`);
+        console.log(`${userId} successfully joined room ${roomId}`);
         socket.join(roomId);
         
         // Notify other users in the room that this user connected
