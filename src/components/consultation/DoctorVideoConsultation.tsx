@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -372,7 +373,7 @@ export const DoctorVideoConsultation = () => {
         <ChatSection 
           roomId={roomId}
           userRole="doctor"
-          userName="Dr. " + user?.name
+          userName={`Dr. ${user?.name}`}
           userImage={user?.profileImage}
           otherParticipantName={patientName}
           otherParticipantImage={patientImage}
