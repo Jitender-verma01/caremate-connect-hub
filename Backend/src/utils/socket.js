@@ -1,3 +1,4 @@
+
 import { Server } from 'socket.io';
 import { Appointment } from '../models/appointment.model.js';
 
@@ -17,16 +18,23 @@ export const initializeSignaling = (server) => {
       const appointment = await Appointment.findOne({ roomId });
       if (!appointment) return { error: 'Appointment not found', appointment: null };
 
-      const { patientId, doctorId, timeSlot } = appointment;
-      const slotDate = new Date(`${timeSlot.day} ${timeSlot.time}`);
+      const { patientId, doctorId, appointmentDate, timeSlot } = appointment;
       const now = new Date();
 
-      // Validate user and time slot
+      // Validate user access
       if (userId !== String(patientId) && userId !== String(doctorId)) {
         return { error: 'Unauthorized access', appointment: null };
       }
-      if (now < slotDate) return { error: 'Session has not started yet', appointment: null };
-      if (now > new Date(slotDate.getTime() + 30 * 60 * 1000)) {
+
+      // Check if appointment time is valid (allow joining 15 minutes before and 1 hour after)
+      const appointmentDateTime = new Date(appointmentDate);
+      const bufferTime = 15 * 60 * 1000; // 15 minutes in milliseconds
+      const sessionDuration = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      if (now < new Date(appointmentDateTime.getTime() - bufferTime)) {
+        return { error: 'Session has not started yet', appointment: null };
+      }
+      if (now > new Date(appointmentDateTime.getTime() + sessionDuration)) {
         return { error: 'Session time has ended', appointment: null };
       }
 
@@ -36,6 +44,8 @@ export const initializeSignaling = (server) => {
     // Join a room
     socket.on('join-room', async (roomId, userId) => {
       try {
+        console.log(`User ${userId} attempting to join room ${roomId}`);
+        
         const { error, appointment } = await validateAppointment(roomId, userId);
         if (error) {
           socket.emit('error', error);
@@ -44,20 +54,29 @@ export const initializeSignaling = (server) => {
 
         console.log(`${userId} joined room ${roomId}`);
         socket.join(roomId);
+        
+        // Notify other users in the room that this user connected
         socket.to(roomId).emit('user-connected', userId);
+
+        // Update appointment session start time if not already set
+        if (!appointment.sessionStart) {
+          appointment.sessionStart = new Date();
+          await appointment.save();
+        }
 
         // Handle disconnection
         socket.on('disconnect', () => {
           console.log(`${userId} disconnected from room ${roomId}`);
           socket.to(roomId).emit('user-disconnected', userId);
         });
+
       } catch (error) {
-        console.error(error);
+        console.error('Error joining room:', error);
         socket.emit('error', 'An unexpected error occurred while joining the room');
       }
     });
 
-    // Handle session ending
+    // Handle session ending (only doctor can end)
     socket.on('end-session', async (roomId, userId) => {
       try {
         const appointment = await Appointment.findOne({ roomId });
@@ -83,31 +102,45 @@ export const initializeSignaling = (server) => {
           roomId,
           endTime: appointment.sessionEnd,
         });
+
+        console.log(`Session ${roomId} ended by doctor ${userId}`);
+
       } catch (error) {
-        console.error(error);
+        console.error('Error ending session:', error);
         socket.emit('error', 'An unexpected error occurred while ending the session');
       }
     });
 
-    socket.on("send-message", (roomId, message) => {
-      socket.to(roomId).emit("receive-message", message);
+    // Handle chat messages
+    socket.on('send-message', (roomId, message) => {
+      console.log(`Message in room ${roomId}:`, message);
+      socket.to(roomId).emit('receive-message', message);
     });
-    
 
-    // Handle receiving offer from one peer and send to the other
+    // WebRTC signaling events
     socket.on('offer', (roomId, offer) => {
+      console.log(`Offer sent to room ${roomId}`);
       socket.to(roomId).emit('offer', offer);
     });
 
-    // Handle receiving answer from second peer and send back to first
     socket.on('answer', (roomId, answer) => {
+      console.log(`Answer sent to room ${roomId}`);
       socket.to(roomId).emit('answer', answer);
     });
 
-    // Handle ICE candidates
     socket.on('ice-candidate', (roomId, candidate) => {
+      console.log(`ICE candidate sent to room ${roomId}`);
       socket.to(roomId).emit('ice-candidate', candidate);
     });
 
+    // Handle user leaving room manually
+    socket.on('leave-room', (roomId, userId) => {
+      console.log(`${userId} leaving room ${roomId}`);
+      socket.leave(roomId);
+      socket.to(roomId).emit('user-disconnected', userId);
+    });
+
   });
+
+  return io;
 };
