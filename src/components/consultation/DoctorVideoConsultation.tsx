@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,7 @@ export const DoctorVideoConsultation = () => {
   const userId = user?.id;
   const patientName = appointment?.patientName || 'Patient';
   const patientImage = appointment?.patientImage;
+  const appointmentReason = appointment?.reason || 'General consultation';
 
   // WebRTC setup, socket listeners, etc.
   useEffect(() => {
@@ -266,7 +266,10 @@ export const DoctorVideoConsultation = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">Doctor Consultation</h1>
         <p className="text-muted-foreground">
-          Consultation with {patientName} - {appointment.date} at {appointment.time}
+          Patient: {patientName} • {appointment.date} at {appointment.time}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Reason: {appointmentReason}
         </p>
       </div>
       
@@ -295,7 +298,7 @@ export const DoctorVideoConsultation = () => {
                           </Avatar>
                         </div>
                         <p>Waiting for {patientName} to join...</p>
-                        {isConnected && <p className="text-green-400 mt-2">Connected</p>}
+                        {isConnected && <p className="text-green-400 mt-2">✓ Connected</p>}
                       </div>
                     )}
                     
@@ -308,6 +311,9 @@ export const DoctorVideoConsultation = () => {
                         playsInline
                         muted
                       />
+                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                        You
+                      </div>
                     </div>
                   </div>
                   
@@ -317,6 +323,7 @@ export const DoctorVideoConsultation = () => {
                       variant={isMicOn ? "outline" : "destructive"}
                       size="icon"
                       onClick={toggleMicrophone}
+                      title={isMicOn ? "Mute microphone" : "Unmute microphone"}
                     >
                       {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
                     </Button>
@@ -325,6 +332,7 @@ export const DoctorVideoConsultation = () => {
                       variant={isVideoOn ? "outline" : "destructive"}
                       size="icon"
                       onClick={toggleVideo}
+                      title={isVideoOn ? "Turn off camera" : "Turn on camera"}
                     >
                       {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
                     </Button>
@@ -332,6 +340,7 @@ export const DoctorVideoConsultation = () => {
                     <Button
                       variant="destructive"
                       onClick={endConsultation}
+                      className="bg-red-600 hover:bg-red-700"
                     >
                       <Phone className="h-5 w-5 mr-2 rotate-[135deg]" />
                       End Session
@@ -352,6 +361,9 @@ export const DoctorVideoConsultation = () => {
                     </Avatar>
                     <h2 className="text-2xl font-bold">{patientName}</h2>
                     <p className="text-muted-foreground">Patient</p>
+                    <p className="text-sm text-care-primary mt-2">
+                      Consultation reason: {appointmentReason}
+                    </p>
                   </div>
                   
                   <p className="text-muted-foreground mb-8">
@@ -359,7 +371,7 @@ export const DoctorVideoConsultation = () => {
                     Start the consultation when ready.
                   </p>
                   
-                  <Button size="lg" onClick={startConsultation}>
+                  <Button size="lg" onClick={startConsultation} className="bg-care-primary hover:bg-care-primary/90">
                     <PlayCircle className="mr-2 h-5 w-5" />
                     Start Consultation
                   </Button>
@@ -371,7 +383,7 @@ export const DoctorVideoConsultation = () => {
         
         {/* Chat and Notes */}
         <ChatSection 
-          roomId={roomId}
+          roomId={roomId || ''}
           userRole="doctor"
           userName={`Dr. ${user?.name}`}
           userImage={user?.profileImage}

@@ -34,6 +34,7 @@ export const PatientVideoConsultation = () => {
   const userId = user?.id;
   const doctorName = appointment?.doctorName || 'Doctor';
   const doctorImage = appointment?.doctorImage;
+  const doctorSpecialty = appointment?.doctorSpecialty || 'General Medicine';
 
   useEffect(() => {
     if (!socket.connected) {
@@ -265,7 +266,7 @@ export const PatientVideoConsultation = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">Video Consultation</h1>
         <p className="text-muted-foreground">
-          Consultation with Dr. {doctorName} - {appointment.date} at {appointment.time}
+          Dr. {doctorName} • {doctorSpecialty} • {appointment.date} at {appointment.time}
         </p>
       </div>
       
@@ -290,11 +291,11 @@ export const PatientVideoConsultation = () => {
                         <div className="mb-4">
                           <Avatar className="w-24 h-24 mx-auto">
                             <AvatarImage src={doctorImage} />
-                            <AvatarFallback>{doctorName?.[0]}</AvatarFallback>
+                            <AvatarFallback>Dr</AvatarFallback>
                           </Avatar>
                         </div>
                         <p>Waiting for Dr. {doctorName} to join...</p>
-                        {isConnected && <p className="text-green-400 mt-2">Connected</p>}
+                        {isConnected && <p className="text-green-400 mt-2">✓ Connected</p>}
                       </div>
                     )}
                     
@@ -307,6 +308,9 @@ export const PatientVideoConsultation = () => {
                         playsInline
                         muted
                       />
+                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                        You
+                      </div>
                     </div>
                   </div>
                   
@@ -316,6 +320,7 @@ export const PatientVideoConsultation = () => {
                       variant={isMicOn ? "outline" : "destructive"}
                       size="icon"
                       onClick={toggleMicrophone}
+                      title={isMicOn ? "Mute microphone" : "Unmute microphone"}
                     >
                       {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
                     </Button>
@@ -324,6 +329,7 @@ export const PatientVideoConsultation = () => {
                       variant={isVideoOn ? "outline" : "destructive"}
                       size="icon"
                       onClick={toggleVideo}
+                      title={isVideoOn ? "Turn off camera" : "Turn on camera"}
                     >
                       {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
                     </Button>
@@ -331,6 +337,7 @@ export const PatientVideoConsultation = () => {
                     <Button
                       variant="destructive"
                       onClick={leaveConsultation}
+                      className="bg-orange-600 hover:bg-orange-700"
                     >
                       <Phone className="h-5 w-5 mr-2 rotate-[135deg]" />
                       Leave Session
@@ -342,10 +349,13 @@ export const PatientVideoConsultation = () => {
                   <div className="mb-6">
                     <Avatar className="w-24 h-24 mx-auto mb-4">
                       <AvatarImage src={doctorImage} />
-                      <AvatarFallback>{doctorName?.[0]}</AvatarFallback>
+                      <AvatarFallback>Dr</AvatarFallback>
                     </Avatar>
                     <h2 className="text-2xl font-bold">Dr. {doctorName}</h2>
-                    <p className="text-care-primary">{appointment.doctorSpecialty}</p>
+                    <p className="text-care-primary">{doctorSpecialty}</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {appointment.doctorExperience} years experience
+                    </p>
                   </div>
                   
                   <p className="text-muted-foreground mb-8">
@@ -353,7 +363,7 @@ export const PatientVideoConsultation = () => {
                     Click the button below to join the video consultation.
                   </p>
                   
-                  <Button size="lg" onClick={startConsultation}>
+                  <Button size="lg" onClick={startConsultation} className="bg-care-primary hover:bg-care-primary/90">
                     <PlayCircle className="mr-2 h-5 w-5" />
                     Join Video Consultation
                   </Button>
@@ -365,7 +375,7 @@ export const PatientVideoConsultation = () => {
         
         {/* Chat */}
         <ChatSection 
-          roomId={roomId}
+          roomId={roomId || ''}
           userRole="patient"
           userName={user?.name || 'Patient'}
           userImage={user?.profileImage}

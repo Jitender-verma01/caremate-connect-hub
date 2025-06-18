@@ -22,8 +22,7 @@ export const initializeSignaling = (server) => {
       
       if (!appointment) return { error: 'Appointment not found', appointment: null };
 
-      const { patientId, doctorId, appointmentDate } = appointment;
-      const now = new Date();
+      const { patientId, doctorId } = appointment;
 
       // Get the actual user IDs from populated data
       const actualPatientUserId = patientId.user_id._id.toString();
@@ -39,12 +38,13 @@ export const initializeSignaling = (server) => {
         return { error: 'Unauthorized access to this appointment', appointment: null };
       }
 
-      // Check if appointment time is valid (allow joining 15 minutes before and 2 hours after)
-      const appointmentDateTime = new Date(appointmentDate);
-      const bufferTime = 15 * 60 * 1000; // 15 minutes in milliseconds
-      const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      // More lenient time validation - allow joining 1 hour before and 4 hours after
+      const now = new Date();
+      const appointmentDateTime = new Date(appointment.appointmentDate);
+      const bufferTimeBefore = 60 * 60 * 1000; // 1 hour before
+      const sessionDuration = 4 * 60 * 60 * 1000; // 4 hours after
 
-      if (now < new Date(appointmentDateTime.getTime() - bufferTime)) {
+      if (now < new Date(appointmentDateTime.getTime() - bufferTimeBefore)) {
         return { error: 'Session has not started yet', appointment: null };
       }
       if (now > new Date(appointmentDateTime.getTime() + sessionDuration)) {
@@ -93,14 +93,19 @@ export const initializeSignaling = (server) => {
     // Handle session ending (only doctor can end)
     socket.on('end-session', async (roomId, userId) => {
       try {
-        const appointment = await Appointment.findOne({ roomId });
+        const appointment = await Appointment.findOne({ roomId }).populate([
+          { path: 'doctorId', populate: { path: 'user_id' } }
+        ]);
+        
         if (!appointment) {
           socket.emit('error', 'Appointment not found');
           return;
         }
 
+        const actualDoctorUserId = appointment.doctorId.user_id._id.toString();
+
         // Only the doctor can end the session
-        if (userId !== String(appointment.doctorId)) {
+        if (userId !== actualDoctorUserId) {
           socket.emit('error', 'Only the doctor can end the session');
           return;
         }
@@ -125,10 +130,11 @@ export const initializeSignaling = (server) => {
       }
     });
 
-    // Handle chat messages
+    // Handle chat messages - broadcast to all users in the room
     socket.on('send-message', (roomId, message) => {
       console.log(`Message in room ${roomId}:`, message);
-      socket.to(roomId).emit('receive-message', message);
+      // Send to all users in the room including sender
+      io.to(roomId).emit('receive-message', message);
     });
 
     // WebRTC signaling events
@@ -153,7 +159,6 @@ export const initializeSignaling = (server) => {
       socket.leave(roomId);
       socket.to(roomId).emit('user-disconnected', userId);
     });
-
   });
 
   return io;

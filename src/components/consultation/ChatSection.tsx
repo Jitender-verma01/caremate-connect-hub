@@ -45,29 +45,41 @@ export const ChatSection = ({
 
   // Socket event listeners for chat
   useEffect(() => {
-    socket.on("receive-message", (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-    });
+    const handleReceiveMessage = (message: Message) => {
+      console.log('Received message:', message);
+      // Only add message if it's not from the current user (to avoid duplicates)
+      if (message.sender !== userRole) {
+        setMessages((prev) => [...prev, message]);
+      }
+    };
+
+    socket.on("receive-message", handleReceiveMessage);
 
     return () => {
-      socket.off("receive-message");
+      socket.off("receive-message", handleReceiveMessage);
     };
-  }, []);
+  }, [userRole]);
 
   // Send message
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !roomId) return;
 
     const message: Message = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${Math.random()}`,
       sender: userRole,
       senderName: userName,
-      text: newMessage,
+      text: newMessage.trim(),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
+    console.log('Sending message:', message);
+    
+    // Add message to local state immediately
     setMessages((prev) => [...prev, message]);
+    
+    // Send to other participants via socket
     socket.emit("send-message", roomId, message);
+    
     setNewMessage("");
   };
 
@@ -85,44 +97,50 @@ export const ChatSection = ({
               {/* Messages area */}
               <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
-                  {messages.map(msg => (
-                    <div 
-                      key={msg.id}
-                      className={`flex ${msg.sender === userRole ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className="flex items-start gap-2 max-w-[80%]">
-                        {msg.sender !== userRole && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={otherParticipantImage} />
-                            <AvatarFallback>
-                              {otherParticipantName?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        
-                        <div>
-                          <div className={`rounded-lg p-3 ${
-                            msg.sender === userRole
-                              ? "bg-care-primary text-white" 
-                              : "bg-muted"
-                          }`}>
-                            <p className="text-sm font-medium mb-1">{msg.senderName}</p>
-                            <p>{msg.text}</p>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">{msg.time}</p>
-                        </div>
-                        
-                        {msg.sender === userRole && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={userImage} />
-                            <AvatarFallback>
-                              {userName?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
+                  {messages.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>No messages yet. Start the conversation!</p>
                     </div>
-                  ))}
+                  ) : (
+                    messages.map(msg => (
+                      <div 
+                        key={msg.id}
+                        className={`flex ${msg.sender === userRole ? "justify-end" : "justify-start"}`}
+                      >
+                        <div className="flex items-start gap-2 max-w-[80%]">
+                          {msg.sender !== userRole && (
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={otherParticipantImage} />
+                              <AvatarFallback>
+                                {otherParticipantName?.[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                          
+                          <div>
+                            <div className={`rounded-lg p-3 ${
+                              msg.sender === userRole
+                                ? "bg-care-primary text-white" 
+                                : "bg-muted"
+                            }`}>
+                              <p className="text-sm font-medium mb-1">{msg.senderName}</p>
+                              <p>{msg.text}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">{msg.time}</p>
+                          </div>
+                          
+                          {msg.sender === userRole && (
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={userImage} />
+                              <AvatarFallback>
+                                {userName?.[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
@@ -135,12 +153,13 @@ export const ChatSection = ({
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
                         handleSendMessage();
                       }
                     }}
                   />
-                  <Button onClick={handleSendMessage}>
+                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -152,16 +171,21 @@ export const ChatSection = ({
         <TabsContent value="notes" className="flex-1 flex flex-col h-full mt-0">
           <Card className="flex-1 flex flex-col h-full">
             <CardContent className="flex-1 flex flex-col p-4">
-              <h3 className="font-medium mb-4">Session Notes</h3>
+              <h3 className="font-medium mb-4">
+                {userRole === 'doctor' ? 'Medical Notes' : 'Personal Notes'}
+              </h3>
               <p className="text-muted-foreground mb-6">
                 {userRole === 'doctor' 
-                  ? "Take notes during the consultation. These will be saved to the patient's record."
+                  ? "Take notes during the consultation. These will be saved to the patient's medical record."
                   : "Take personal notes during your consultation. These notes are private and only visible to you."
                 }
               </p>
               <textarea
                 className="flex-1 p-4 border rounded-md resize-none outline-none focus:ring-1 focus:ring-care-primary"
-                placeholder="Type your notes here..."
+                placeholder={userRole === 'doctor' 
+                  ? "Medical observations, diagnosis, treatment recommendations..."
+                  : "Questions to ask, symptoms to mention, important points..."
+                }
               ></textarea>
               <div className="mt-4 flex justify-end">
                 <Button variant="outline">Save Notes</Button>
