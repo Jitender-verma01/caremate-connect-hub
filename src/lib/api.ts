@@ -124,9 +124,9 @@ export const api = {
     },
     
     getById: (id: string) => apiRequest(`/doctor/profile/${id}`),
-    
+
     getProfile: () => apiRequest('/doctor/profile'),
-    
+
     getBySpecialization: (specialization: string) => 
       apiRequest(`/doctor/specialization?specialization=${specialization}`),
     

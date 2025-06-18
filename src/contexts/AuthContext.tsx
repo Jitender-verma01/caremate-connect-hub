@@ -46,7 +46,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const userData = await api.auth.getCurrentUser();
       console.log("Loaded user data:", userData);
-      setUser(userData.data);
+      const transformedUser: User = {
+        id: userData.data._id, // 👈 fix here
+        name: userData.data.name,
+        email: userData.data.email,
+        role: userData.data.role,
+        profileImage: userData.data.profileImage,
+        phoneNumber: userData.data.phoneNumber,
+      };
+      
+      setUser(transformedUser);
+      
     } catch (error) {
       console.error("Failed to load user:", error);
       // Clear invalid token
@@ -82,7 +92,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Handle the response structure properly
       if (response && response.data && response.data.accessToken) {
         localStorage.setItem('caremate_auth_token', response.data.accessToken);
-        setUser(response.data.user);
+        const userFromBackend = response.data.user;
+
+        const transformedUser: User = {
+          id: userFromBackend._id,
+          name: userFromBackend.name,
+          email: userFromBackend.email,
+          role: userFromBackend.role,
+          profileImage: userFromBackend.profileImage,
+          phoneNumber: userFromBackend.phoneNumber,
+        };
+
+        setUser(transformedUser);
+
         
         // Setup socket auth with new token
         setupSocketAuth(response.data.accessToken);
@@ -115,7 +137,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Store the token - ensure we're using the correct response structure
       if (response.data && response.data.accessToken) {
         localStorage.setItem('caremate_auth_token', response.data.accessToken);
-        setUser(response.data.user);
+        const userFromBackend = response.data.user;
+
+        const transformedUser: User = {
+          id: userFromBackend._id,
+          name: userFromBackend.name,
+          email: userFromBackend.email,
+          role: userFromBackend.role,
+          profileImage: userFromBackend.profileImage,
+          phoneNumber: userFromBackend.phoneNumber,
+        };
+
+        setUser(transformedUser);
+
         
         // Setup socket auth with new token
         setupSocketAuth(response.data.accessToken);

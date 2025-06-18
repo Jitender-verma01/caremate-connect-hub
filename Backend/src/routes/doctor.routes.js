@@ -14,6 +14,8 @@ router.route("/update").patch(updateDoctorProfile);
 router.route("/update-profile-image").patch(upload.single("profileImage"), updateProfileImage);
 router.route("/time-slots/:doctorId").patch(updateAvailableTimeSlots);
 
+router.get('/me', getDoctorByUserId); // ✅ protected route
+
 router.route("/profile").get(getDoctorByUserId);
 router.route("/profile/:doctorId").get(getDoctorById);
 router.route("/all-doctors").get(getDoctors);

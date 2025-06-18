@@ -88,5 +88,26 @@ export const initializeSignaling = (server) => {
         socket.emit('error', 'An unexpected error occurred while ending the session');
       }
     });
+
+    socket.on("send-message", (roomId, message) => {
+      socket.to(roomId).emit("receive-message", message);
+    });
+    
+
+    // Handle receiving offer from one peer and send to the other
+    socket.on('offer', (roomId, offer) => {
+      socket.to(roomId).emit('offer', offer);
+    });
+
+    // Handle receiving answer from second peer and send back to first
+    socket.on('answer', (roomId, answer) => {
+      socket.to(roomId).emit('answer', answer);
+    });
+
+    // Handle ICE candidates
+    socket.on('ice-candidate', (roomId, candidate) => {
+      socket.to(roomId).emit('ice-candidate', candidate);
+    });
+
   });
 };

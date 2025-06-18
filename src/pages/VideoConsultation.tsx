@@ -9,57 +9,32 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mic, MicOff, Video, VideoOff, Phone, FileText, Send, PlayCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock appointment data
-const mockAppointment = {
-  id: "appt-1",
-  patient: {
-    id: "patient-1",
-    name: "John Smith",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-  },
-  doctor: {
-    id: "doctor-1",
-    name: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    image: "https://randomuser.me/api/portraits/women/67.jpg",
-  },
-  date: "2025-05-03",
-  time: "10:30 AM",
-  consultationType: "Video Consultation",
-};
-
-// Mock chat messages
-const initialMessages = [
-  {
-    id: "msg-1",
-    sender: "doctor",
-    text: "Hello John, how are you feeling today?",
-    time: "10:30 AM",
-  },
-  {
-    id: "msg-2",
-    sender: "patient",
-    text: "Hi Dr. Johnson, I've been experiencing some chest pain lately.",
-    time: "10:31 AM",
-  },
-  {
-    id: "msg-3",
-    sender: "doctor",
-    text: "I see. Can you describe the pain? Is it sharp or dull? Does it come and go, or is it constant?",
-    time: "10:32 AM",
-  },
-];
+import { socket } from "@/lib/socket"; // adjust if your socket file is elsewhere
+import { useAppointment } from "@/hooks/useAppointments";
 
 const VideoConsultation = () => {
   const { appointmentId } = useParams<{ appointmentId: string }>();
-  const [appointment] = useState(mockAppointment);
-  const [messages, setMessages] = useState(initialMessages);
+  const { data: appointment, isLoading } = useAppointment(appointmentId!);
+  console.log("Appointment data:", appointment);
+  
+  const userId = localStorage.getItem("userId");
+  const [role, setRole] = useState<string>('');
+
+  useEffect(() => {
+    if (userId === appointment?.patientId) {
+      setRole('patient');
+    } else {
+      setRole('doctor');
+    }
+  }, [userId, appointment]);
+
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isMicOn, setIsMicOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isConsultationActive, setIsConsultationActive] = useState(false);
-  
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -70,99 +45,143 @@ const VideoConsultation = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
   
-  // Mock starting a video call
-  const startConsultation = () => {
+  
+  // Function for starting a video call
+  const startConsultation = async () => {
     setIsConsultationActive(true);
+  
+    socket.connect();
+
+    useEffect(() => {
+      socket.on("receive-message", (message) => {
+        setMessages((prev) => [...prev, message]);
+      });
     
-    // In a real app, this is where you would initialize WebRTC
-    // or connect to a service like Twilio Video or Agora
+      return () => {
+        socket.off("receive-message"); // Clean it up
+      };
+    }, []);
     
-    // Mock: Show the user's webcam in the local video element
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
-          
-          // Mock: After 2 seconds, show a fake remote stream (just using the same stream for demo)
-          setTimeout(() => {
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = stream;
-              
-              toast({
-                title: "Doctor connected",
-                description: "Dr. Sarah Johnson has joined the consultation",
-              });
-            }
-          }, 2000);
-        })
-        .catch(err => {
-          console.error("Error accessing camera and microphone:", err);
-          toast({
-            variant: "destructive",
-            title: "Camera access denied",
-            description: "Please allow access to your camera and microphone to join the consultation.",
-          });
-        });
+    
+    socket.emit("join-room", appointment?.id, appointment?.patientId); // You might fetch real userId here
+  
+    const localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+  
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
     }
+  
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+      ],
+    });
+  
+    localStream.getTracks().forEach((track) => {
+      pc.addTrack(track, localStream);
+    });
+  
+    pc.ontrack = (event) => {
+      const remoteStream  = event.streams[0];
+      setRemoteStream(remoteStream );
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream ;
+      }
+    };
+  
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ice-candidate", appointment?.id, event.candidate);
+      }
+    };
+  
+    peerConnectionRef.current = pc;
+  
+    socket.on("user-connected", async (userId) => {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit("offer", appointment?.id, offer);
+    });
+  
+    socket.on("offer", async (offer) => {
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit("answer", appointment?.id, answer);
+    });
+  
+    socket.on("answer", async (answer) => {
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+  
+    socket.on("ice-candidate", async (candidate) => {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error("Error adding ICE candidate", err);
+      }
+    });
+  
+    toast({
+      title: "Video Session Started",
+      description: "Connecting...",
+    });
   };
   
-  // Mock ending a video call
+  
+  // Function for ending a video call
   const endConsultation = () => {
-    // In a real app, close WebRTC connections here
-    
-    if (localVideoRef.current?.srcObject) {
-      const tracks = (localVideoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
-    }
-    
+    socket.emit("end-session", appointment?.id, appointment?.patientId);
+    socket.disconnect();
+  
+    peerConnectionRef.current?.close();
+    peerConnectionRef.current = null;
+  
+    const tracks = (localVideoRef.current?.srcObject as MediaStream)?.getTracks();
+    tracks?.forEach((track) => track.stop());
+  
     setIsConsultationActive(false);
+    setRemoteStream(null);
     toast({
       title: "Consultation ended",
       description: "Your video consultation has been completed.",
     });
   };
   
+  
   // Handle sending a new message
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
-    
-    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    setMessages([
-      ...messages,
-      {
-        id: `msg-${Date.now()}`,
-        sender: "patient", // In a real app, use the current user's role
-        text: newMessage,
-        time: currentTime,
-      }
-    ]);
-    
+  
+    const message = {
+      id: `msg-${Date.now()}`,
+      sender: role,
+      text: newMessage,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+  
+    setMessages((prev) => [...prev, message]);
+    socket.emit("send-message", appointment?.id, message);
     setNewMessage("");
-    
-    // Mock doctor response after a short delay
-    setTimeout(() => {
-      setMessages(prevMessages => [
-        ...prevMessages,
-        {
-          id: `msg-${Date.now()}`,
-          sender: "doctor",
-          text: "Thank you for the information. Let me know if you have any other symptoms.",
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }
-      ]);
-    }, 3000);
   };
 
+  if (isLoading || !appointment) {
+    return <p>Loading appointment...</p>; // or a skeleton
+  }
+  
+  
+  
   return (
     <div className="h-[calc(100vh-10rem)] flex flex-col">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">Video Consultation</h1>
         <p className="text-muted-foreground">
-          Appointment with {appointment.doctor.name} - {new Date(appointment.date).toLocaleDateString()} at {appointment.time}
+          Appointment with {appointment?.doctorName} - {appointment?.date} at {appointment?.time}
         </p>
       </div>
       
@@ -235,17 +254,17 @@ const VideoConsultation = () => {
                   <div className="mb-6">
                     <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4">
                       <img 
-                        src={appointment.doctor.image} 
-                        alt={appointment.doctor.name} 
+                        src={appointment?.doctorImage} 
+                        alt={appointment?.doctorName} 
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <h2 className="text-2xl font-bold">{appointment.doctor.name}</h2>
-                    <p className="text-care-primary">{appointment.doctor.specialty}</p>
+                    <h2 className="text-2xl font-bold">{appointment?.doctorName}</h2>
+                    <p className="text-care-primary">{appointment?.doctorSpecialty}</p>
                   </div>
                   
                   <p className="text-muted-foreground mb-8">
-                    Your appointment is scheduled for {new Date(appointment.date).toLocaleDateString()} at {appointment.time}.
+                    Your appointment is scheduled for {appointment?.date} at {appointment?.time}.
                     Click the button below to join the video consultation.
                   </p>
                   
@@ -281,7 +300,7 @@ const VideoConsultation = () => {
                           <div className="flex items-start gap-2 max-w-[80%]">
                             {msg.sender !== "patient" && (
                               <Avatar>
-                                <AvatarImage src={appointment.doctor.image} />
+                                <AvatarImage src={appointment?.doctorImage} />
                                 <AvatarFallback>DR</AvatarFallback>
                               </Avatar>
                             )}
@@ -299,7 +318,7 @@ const VideoConsultation = () => {
                             
                             {msg.sender === "patient" && (
                               <Avatar>
-                                <AvatarImage src={appointment.patient.image} />
+                                <AvatarImage src={appointment?.patientImage} />
                                 <AvatarFallback>PT</AvatarFallback>
                               </Avatar>
                             )}

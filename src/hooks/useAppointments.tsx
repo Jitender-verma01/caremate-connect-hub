@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export interface Appointment {
   id: string;
   doctorId: string;
+  patientId: string;
   doctorName?: string;
   doctorSpecialty?: string;
   date: string;
@@ -141,12 +142,31 @@ export const useAppointment = (id: string) => {
   return useQuery({
     queryKey: ["appointment", id],
     queryFn: async () => {
-      const response = await api.appointments.getById(id);
-      return response as Appointment;
+      const res = await api.appointments.getById(id);
+      const app = res.data;
+
+      return {
+        id: app._id,
+        date: new Date(app.appointmentDate).toLocaleDateString(),
+        time: app.timeSlot?.split(" ")[1] ?? "N/A",
+        day: app.timeSlot?.split(" ")[0] ?? "",
+        consultationType: app.consultationType,
+        reason: app.reason,
+        status: app.status,
+        roomId: app.roomId,
+        doctorName: app.doctorId?.user_id?.name ?? "Unknown Doctor",
+        doctorSpecialty: app.doctorId?.specialization ?? "General",
+        doctorImage: app.doctorId?.profileImage,
+        patientName: app.patientId?.user_id?.name ?? "You",
+        patientImage: app.patientId?.profileImage,
+        doctorId: app.doctorId?._id ?? "",
+        patientId: app.patientId?._id ?? "",
+      };
     },
     enabled: !!id,
   });
 };
+
 
 // Book a new appointment
 export const useBookAppointment = () => {

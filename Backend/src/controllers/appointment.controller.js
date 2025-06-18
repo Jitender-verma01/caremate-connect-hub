@@ -109,6 +109,8 @@ const getAllAppointmentsForPatient = asyncHandler(async (req, res) => {
 
 const getAllAppointmentsForDoctor = asyncHandler(async (req, res) => {
     const { doctorId } = req.params;
+    console.log("Looking up appointments for doctorId:", doctorId);
+
     if (!doctorId) {
         throw new ApiError(400, "Doctor ID is required");
     }

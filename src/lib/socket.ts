@@ -2,8 +2,8 @@
 import { io } from 'socket.io-client';
 
 // Use the same base URL as API
-const API_BASE_URL = "https://caremate-connect-hub.onrender.com";
-
+const API_BASE_URL = "http://localhost:8000";
+// https://caremate-connect-hub.onrender.com
 // Create socket instance but don't connect automatically
 export const socket = io(API_BASE_URL, { 
   autoConnect: false,

@@ -9,10 +9,23 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Clock, User, VideoIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 
 export function AppointmentManagement() {
   const { user } = useAuth();
-  const { data, isLoading, error } = useDoctorAppointments(user?.id || '');
+  console.log("user", user);
+  const { data: doctorProfile, isLoading: doctorLoading } = useQuery({
+    queryKey: ['doctor', user?.id],
+    queryFn: () => api.doctors.getProfile().then(res => res.data),
+    enabled: !!user?.id,
+  });
+  console.log("doctorProfile", doctorProfile);
+  console.log("doctorProfile ID:", doctorProfile?._id);
+
+
+  const { data, isLoading, error } = useDoctorAppointments(doctorProfile?._id || '');
+  console.log("data", data);
   const updateStatus = useUpdateAppointmentStatus();
   
   if (isLoading) {
@@ -24,6 +37,7 @@ export function AppointmentManagement() {
   }
   
   const appointments = data?.appointments || [];
+  console.log("Appointments:", appointments);
   
   const todayAppointments = appointments.filter(
     app => format(new Date(app.date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')

@@ -337,6 +337,8 @@ const getDoctors = asyncHandler(async (req, res) => {
 });
 
 
+
+
 export { 
     createDoctor,
     getDoctorById,
