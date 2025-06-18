@@ -157,6 +157,7 @@ export const useAppointment = (id: string) => {
         doctorName: app.doctorId?.user_id?.name ?? "Unknown Doctor",
         doctorSpecialty: app.doctorId?.specialization ?? "General",
         doctorImage: app.doctorId?.profileImage,
+        doctorExperience: app.doctorId?.experience ?? 0,
         patientName: app.patientId?.user_id?.name ?? "You",
         patientImage: app.patientId?.profileImage,
         doctorId: app.doctorId?._id ?? "",
