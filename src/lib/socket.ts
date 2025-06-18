@@ -38,10 +38,8 @@ export const setupSocketAuth = (token: string | null) => {
   if (token) {
     socket.auth = { token };
   } else {
-    // Make auth optional to allow deletion
-    if (socket.auth) {
-      socket.auth = undefined;
-    }
+    // Reset auth by creating a new socket instance or clearing the property properly
+    (socket as any).auth = undefined;
   }
 };
 
