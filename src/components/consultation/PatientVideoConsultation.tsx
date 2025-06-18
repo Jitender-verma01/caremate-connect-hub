@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,9 @@ export const PatientVideoConsultation = () => {
 
     // Error handling
     socket.on("error", (error: string) => {
+      console.error("Socket error:", error);
       toast({
-        title: "Error",
+        title: "Connection Issue",
         description: error,
         variant: "destructive",
       });
@@ -73,26 +75,38 @@ export const PatientVideoConsultation = () => {
   const handleUserConnected = async (connectedUserId: string) => {
     console.log("User connected:", connectedUserId);
     if (connectedUserId !== userId && peerConnectionRef.current) {
-      const offer = await peerConnectionRef.current.createOffer();
-      await peerConnectionRef.current.setLocalDescription(offer);
-      socket.emit("offer", roomId, offer);
+      try {
+        const offer = await peerConnectionRef.current.createOffer();
+        await peerConnectionRef.current.setLocalDescription(offer);
+        socket.emit("offer", roomId, offer);
+      } catch (error) {
+        console.error("Error creating offer:", error);
+      }
     }
   };
 
   const handleOffer = async (offer: RTCSessionDescriptionInit) => {
     console.log("Received offer");
     if (peerConnectionRef.current) {
-      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await peerConnectionRef.current.createAnswer();
-      await peerConnectionRef.current.setLocalDescription(answer);
-      socket.emit("answer", roomId, answer);
+      try {
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnectionRef.current.createAnswer();
+        await peerConnectionRef.current.setLocalDescription(answer);
+        socket.emit("answer", roomId, answer);
+      } catch (error) {
+        console.error("Error handling offer:", error);
+      }
     }
   };
 
   const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
     console.log("Received answer");
     if (peerConnectionRef.current) {
-      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+      try {
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+      } catch (error) {
+        console.error("Error handling answer:", error);
+      }
     }
   };
 
@@ -112,7 +126,7 @@ export const PatientVideoConsultation = () => {
     setIsConnected(false);
     toast({
       title: "User Disconnected",
-      description: "The other participant has left the session.",
+      description: "The doctor has left the session.",
     });
   };
 
@@ -188,7 +202,7 @@ export const PatientVideoConsultation = () => {
 
       toast({
         title: "Joining Session",
-        description: "Waiting for the other participant...",
+        description: "Connecting to the consultation...",
       });
 
     } catch (error) {
@@ -202,7 +216,7 @@ export const PatientVideoConsultation = () => {
     }
   };
 
-  // Leave consultation (Patient can only leave, not end)
+  // Leave consultation
   const leaveConsultation = () => {
     cleanupAndExit();
   };
@@ -219,8 +233,10 @@ export const PatientVideoConsultation = () => {
       peerConnectionRef.current = null;
     }
 
-    // Disconnect socket
-    socket.disconnect();
+    // Leave room and disconnect socket
+    if (roomId && userId) {
+      socket.emit("leave-room", roomId, userId);
+    }
 
     setIsConsultationActive(false);
     setRemoteStream(null);
@@ -277,7 +293,7 @@ export const PatientVideoConsultation = () => {
             <CardContent className="p-0 flex flex-col h-full relative">
               {isConsultationActive ? (
                 <>
-                  {/* Main video area */}
+                  {/* Main video area - showing doctor */}
                   <div className="flex-1 bg-black flex items-center justify-center relative">
                     {remoteStream ? (
                       <video 
@@ -299,7 +315,7 @@ export const PatientVideoConsultation = () => {
                       </div>
                     )}
                     
-                    {/* Local video overlay */}
+                    {/* Local video overlay - showing patient (you) */}
                     <div className="absolute bottom-4 right-4 w-48 h-36 bg-gray-900 rounded-lg overflow-hidden border-2 border-white">
                       <video 
                         ref={localVideoRef}

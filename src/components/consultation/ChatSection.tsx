@@ -45,12 +45,17 @@ export const ChatSection = ({
 
   // Socket event listeners for chat
   useEffect(() => {
+    if (!roomId) return;
+
     const handleReceiveMessage = (message: Message) => {
       console.log('Received message:', message);
-      // Only add message if it's not from the current user (to avoid duplicates)
-      if (message.sender !== userRole) {
-        setMessages((prev) => [...prev, message]);
-      }
+      setMessages((prev) => {
+        // Check if message already exists to avoid duplicates
+        if (prev.some(m => m.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
     };
 
     socket.on("receive-message", handleReceiveMessage);
@@ -58,7 +63,7 @@ export const ChatSection = ({
     return () => {
       socket.off("receive-message", handleReceiveMessage);
     };
-  }, [userRole]);
+  }, [roomId]);
 
   // Send message
   const handleSendMessage = () => {
@@ -74,10 +79,7 @@ export const ChatSection = ({
 
     console.log('Sending message:', message);
     
-    // Add message to local state immediately
-    setMessages((prev) => [...prev, message]);
-    
-    // Send to other participants via socket
+    // Send to server (server will broadcast to all including sender)
     socket.emit("send-message", roomId, message);
     
     setNewMessage("");

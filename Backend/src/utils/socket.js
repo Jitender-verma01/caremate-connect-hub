@@ -13,7 +13,7 @@ export const initializeSignaling = (server) => {
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
-    // Helper function for appointment validation
+    // Helper function for appointment validation (without time restrictions)
     const validateAppointment = async (roomId, userId) => {
       const appointment = await Appointment.findOne({ roomId }).populate([
         { path: 'patientId', populate: { path: 'user_id' } },
@@ -38,19 +38,7 @@ export const initializeSignaling = (server) => {
         return { error: 'Unauthorized access to this appointment', appointment: null };
       }
 
-      // More lenient time validation - allow joining 1 hour before and 4 hours after
-      const now = new Date();
-      const appointmentDateTime = new Date(appointment.appointmentDate);
-      const bufferTimeBefore = 60 * 60 * 1000; // 1 hour before
-      const sessionDuration = 4 * 60 * 60 * 1000; // 4 hours after
-
-      if (now < new Date(appointmentDateTime.getTime() - bufferTimeBefore)) {
-        return { error: 'Session has not started yet', appointment: null };
-      }
-      if (now > new Date(appointmentDateTime.getTime() + sessionDuration)) {
-        return { error: 'Session time has ended', appointment: null };
-      }
-
+      // Remove time validation for now - allow joining anytime
       return { error: null, appointment };
     };
 
@@ -133,23 +121,23 @@ export const initializeSignaling = (server) => {
     // Handle chat messages - broadcast to all users in the room
     socket.on('send-message', (roomId, message) => {
       console.log(`Message in room ${roomId}:`, message);
-      // Send to all users in the room including sender
+      // Send to all users in the room including sender for confirmation
       io.to(roomId).emit('receive-message', message);
     });
 
     // WebRTC signaling events
     socket.on('offer', (roomId, offer) => {
-      console.log(`Offer sent to room ${roomId}`);
+      console.log(`Offer sent to room ${roomId} by ${socket.id}`);
       socket.to(roomId).emit('offer', offer);
     });
 
     socket.on('answer', (roomId, answer) => {
-      console.log(`Answer sent to room ${roomId}`);
+      console.log(`Answer sent to room ${roomId} by ${socket.id}`);
       socket.to(roomId).emit('answer', answer);
     });
 
     socket.on('ice-candidate', (roomId, candidate) => {
-      console.log(`ICE candidate sent to room ${roomId}`);
+      console.log(`ICE candidate sent to room ${roomId} by ${socket.id}`);
       socket.to(roomId).emit('ice-candidate', candidate);
     });
 
