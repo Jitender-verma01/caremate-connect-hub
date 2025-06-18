@@ -38,7 +38,10 @@ export const setupSocketAuth = (token: string | null) => {
   if (token) {
     socket.auth = { token };
   } else {
-    delete socket.auth;
+    // Make auth optional to allow deletion
+    if (socket.auth) {
+      socket.auth = undefined;
+    }
   }
 };
 

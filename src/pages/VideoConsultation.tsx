@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -51,10 +50,10 @@ const VideoConsultation = () => {
   const userId = user?.id;
 
   // Participant info
-  const doctorName = appointment?.doctorId?.user_id?.name || 'Doctor';
-  const patientName = appointment?.patientId?.user_id?.name || 'Patient';
-  const doctorImage = appointment?.doctorId?.profileImage;
-  const patientImage = appointment?.patientId?.profileImage;
+  const doctorName = appointment?.doctorName || 'Doctor';
+  const patientName = appointment?.patientName || 'Patient';
+  const doctorImage = appointment?.doctorImage;
+  const patientImage = appointment?.patientImage;
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -319,7 +318,7 @@ const VideoConsultation = () => {
         <h1 className="text-2xl font-bold mb-1">Video Consultation</h1>
         <p className="text-muted-foreground">
           {isDoctor ? `Consultation with ${patientName}` : `Consultation with Dr. ${doctorName}`} - 
-          {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.timeSlot}
+          {appointment.date} at {appointment.time}
         </p>
       </div>
       
@@ -413,12 +412,12 @@ const VideoConsultation = () => {
                       {isDoctor ? patientName : `Dr. ${doctorName}`}
                     </h2>
                     {!isDoctor && (
-                      <p className="text-care-primary">{appointment.doctorId?.specialization}</p>
+                      <p className="text-care-primary">{appointment.doctorSpecialty}</p>
                     )}
                   </div>
                   
                   <p className="text-muted-foreground mb-8">
-                    Your appointment is scheduled for {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.timeSlot}.
+                    Your appointment is scheduled for {appointment.date} at {appointment.time}.
                     Click the button below to join the video consultation.
                   </p>
                   
