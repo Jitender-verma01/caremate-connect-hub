@@ -60,10 +60,16 @@ export const initializeSignaling = (server) => {
 
         console.log(`${userId} successfully joined room ${roomId}`);
         socket.join(roomId);
-        
+        socket.emit("ready", roomId);
         // Notify other users in the room that this user connected
-        socket.to(roomId).emit('user-connected', userId);
-        console.log(`Notified room ${roomId} that user ${userId} connected`);
+        socket.on("user-connected", (roomId, userId) => {
+          console.log(`📡 User ${userId} connected in room ${roomId}`);
+          socket.to(roomId).emit("user-connected", userId); // broadcast to others in the room
+        });
+        
+        
+        // socket.to(roomId).emit('user-connected', userId);
+        // console.log(`Notified room ${roomId} that user ${userId} connected`);
 
         // Update appointment session start time if not already set
         if (!appointment.sessionStart) {

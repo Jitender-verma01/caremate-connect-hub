@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 
 // Use the same base URL as API
 const API_BASE_URL = "https://caremate-connect-hub.onrender.com";
-
+// https://caremate-connect-hub.onrender.com
 // Create socket instance but don't connect automatically
 export const socket = io(API_BASE_URL, { 
   autoConnect: false,
@@ -13,7 +13,7 @@ export const socket = io(API_BASE_URL, {
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
-  maxReconnectionAttempts: 5
+  reconnectionAttempts: 5 // Changed from maxReconnectionAttempts to reconnectionAttempts
 });
 
 // Add connection event listeners for debugging

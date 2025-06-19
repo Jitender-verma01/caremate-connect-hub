@@ -16,6 +16,7 @@ const appointmentSchema = new Schema({
     roomId: {
         type: String,
         required: true,
+        index: true,
         unique: true
     },
     appointmentDate: {
@@ -52,7 +53,6 @@ const appointmentSchema = new Schema({
 }, { timestamps: true });
 
 // Add index for better query performance
-appointmentSchema.index({ roomId: 1 });
 appointmentSchema.index({ patientId: 1, appointmentDate: 1 });
 appointmentSchema.index({ doctorId: 1, appointmentDate: 1 });
 
