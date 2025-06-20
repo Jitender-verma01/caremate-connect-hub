@@ -1,16 +1,15 @@
+
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Prescription } from "../models/prescription.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const createPrescription = asyncHandler(async (req, res) => {
-    const { doctorId, patientId } = req.params;
+    const { doctorId, patientId, medication, dosage, instructions } = req.body;
 
     if (!doctorId || !patientId) {
         throw new ApiError(400, "Patient or doctor ID not found")
     }
-
-    const {medication, dosage, instructions} = req.body;
 
     if (!medication || !dosage || !instructions) {
         throw new ApiError(404, "All fields are required")
@@ -54,7 +53,7 @@ const getPrescriptionById = asyncHandler(async (req, res) => {
 });
 
 const getPrescriptionsForPatient = asyncHandler(async (req, res) => {
-    const { patientId } = req.params;
+    const { patientId } = req.query;
 
     if (!patientId) {
         throw new ApiError(400, "Patient ID not found")

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -26,9 +25,16 @@ import { Search, Download, FileText, MoreVertical, Printer, Clock, CheckCircle }
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import DoctorPrescriptions from "./DoctorPrescriptions";
 
 const Prescriptions = () => {
   const { user } = useAuth();
+
+  // If user is a doctor, show doctor prescription management
+  if (user?.role === 'doctor') {
+    return <DoctorPrescriptions />;
+  }
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
   
