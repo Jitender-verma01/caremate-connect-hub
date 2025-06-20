@@ -42,36 +42,42 @@ export const PatientVideoConsultation = () => {
   useEffect(() => {
     if (roomId && userId && socket.connected) {
       console.log("✅ user-connected can now emit:", { roomId, userId });
-      socket.emit("user-connected", roomId, userId);
+      socket.emit("join-room", roomId, userId);
+
+      socket.on("trigger-offer", (connectedUserId) => {
+        console.log("⚡ Received trigger-offer from:", connectedUserId);
+        handleUserConnected(connectedUserId); // This will create and send the offer
+      });
+      
+      socket.once("ready", () => {
+        console.log("🚀 Server is ready — emitting user-connected");
+        socket.emit("user-connected", roomId, userId);
+      });
     }
   }, [roomId, userId, socket.connected]);
+  
   
   useEffect(() => {
     if (!socket.connected) {
       socket.connect();
     }
-
-    socket.on("ready", () => {
-      console.log("✅ Received ready. Telling others I'm here");
-    
-      // if (roomId && userId) {
-      //   console.log("💬 Emitting user-connected with:", { roomId, userId });
-      //   socket.emit("user-connected", roomId, userId);
-      // } else {
-      //   console.warn("roomId or userId is missing when trying to emit user-connected");
-      // }
-    });
-    
-
-    // WebRTC signaling
+  
+    // Clear existing listeners (prevent stacking)
+    socket.off("user-connected", handleUserConnected);
+    socket.off("offer", handleOffer);
+    socket.off("answer", handleAnswer);
+    socket.off("ice-candidate", handleIceCandidate);
+    socket.off("user-disconnected", handleUserDisconnected);
+    socket.off("session-ended", handleSessionEnded);
+    socket.off("error");
+  
+    // Add fresh listeners
     socket.on("user-connected", handleUserConnected);
     socket.on("offer", handleOffer);
     socket.on("answer", handleAnswer);
     socket.on("ice-candidate", handleIceCandidate);
     socket.on("user-disconnected", handleUserDisconnected);
     socket.on("session-ended", handleSessionEnded);
-
-    // Error handling
     socket.on("error", (error: string) => {
       console.error("Socket error:", error);
       toast({
@@ -80,18 +86,18 @@ export const PatientVideoConsultation = () => {
         variant: "destructive",
       });
     });
-
+  
     return () => {
-      socket.off("ready");
-      socket.off("user-connected");
-      socket.off("offer");
-      socket.off("answer");
-      socket.off("ice-candidate");
-      socket.off("user-disconnected");
-      socket.off("session-ended");
+      socket.off("user-connected", handleUserConnected);
+      socket.off("offer", handleOffer);
+      socket.off("answer", handleAnswer);
+      socket.off("ice-candidate", handleIceCandidate);
+      socket.off("user-disconnected", handleUserDisconnected);
+      socket.off("session-ended", handleSessionEnded);
       socket.off("error");
     };
-  }, []);
+  }, [roomId, userId]);
+  
 
   const startPeerConnection = async () => {
     console.log(">>> startPeerConnection running");
@@ -167,6 +173,7 @@ export const PatientVideoConsultation = () => {
         const offer = await peerConnectionRef.current.createOffer();
         await peerConnectionRef.current.setLocalDescription(offer);
         socket.emit("offer", roomId, offer);
+        console.log("Offer created and sent to:", connectedUserId);
       } catch (error) {
         console.error("Error creating offer:", error);
       }
@@ -261,6 +268,8 @@ export const PatientVideoConsultation = () => {
   const startConsultation = async () => {
     await startPeerConnection();
     socket.emit("join-room", roomId, userId);
+    socket.emit("ready-for-offer", roomId, userId);
+
     setIsConsultationActive(true);
     console.log(">>> startConsultation triggered");
   };

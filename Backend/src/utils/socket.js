@@ -42,6 +42,18 @@ export const initializeSignaling = (server) => {
       return { error: null, appointment };
     };
 
+    socket.on("ready-for-offer", (roomId, senderId) => {
+      console.log(`🟢 ${senderId} is ready for offer in room ${roomId}`);
+      socket.to(roomId).emit("trigger-offer", senderId);
+    });
+    
+
+    socket.on("user-connected", (roomId, userId) => {
+      console.log(`📡 User ${userId} connected in room ${roomId}`);
+      socket.to(roomId).emit("user-connected", userId);
+      console.log(`📡 EMITTED 'user-connected' to room ${roomId} for user ${userId}`);
+    });
+
     // Join a room
     socket.on('join-room', async (roomId, userId) => {
       try {
@@ -61,13 +73,7 @@ export const initializeSignaling = (server) => {
         console.log(`${userId} successfully joined room ${roomId}`);
         socket.join(roomId);
         socket.emit("ready", roomId);
-        // Notify other users in the room that this user connected
-        socket.on("user-connected", (roomId, userId) => {
-          console.log(`📡 User ${userId} connected in room ${roomId}`);
-          socket.to(roomId).emit("user-connected", userId); // broadcast to others in the room
-        });
-        
-        
+    
         // socket.to(roomId).emit('user-connected', userId);
         // console.log(`Notified room ${roomId} that user ${userId} connected`);
 
@@ -82,6 +88,11 @@ export const initializeSignaling = (server) => {
         socket.emit('error', 'An unexpected error occurred while joining the room');
       }
     });
+    // Notify other users in the room that this user connected
+    // socket.on("user-connected", (roomId, userId) => {
+    //   console.log(`📡 User ${userId} connected in room ${roomId}`);
+    //   socket.to(roomId).emit("user-connected", userId); // broadcast to others in the room
+    // });
 
     // Handle session ending (only doctor can end)
     socket.on('end-session', async (roomId, userId) => {
