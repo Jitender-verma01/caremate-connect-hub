@@ -88,6 +88,7 @@ export const PatientVideoConsultation = () => {
     });
   
     return () => {
+      cleanUpConnection();
       socket.off("user-connected", handleUserConnected);
       socket.off("offer", handleOffer);
       socket.off("answer", handleAnswer);
@@ -97,8 +98,22 @@ export const PatientVideoConsultation = () => {
       socket.off("error");
     };
   }, [roomId, userId]);
-  
 
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+      console.log("✅ remote video stream attached");
+    }
+  }, [remoteStream]);
+  
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+      console.log("✅ local video stream attached");
+    }
+  }, [localStream]);
+  
+  
   const startPeerConnection = async () => {
     console.log(">>> startPeerConnection running");
     let stream: MediaStream;
@@ -132,9 +147,15 @@ export const PatientVideoConsultation = () => {
   
     pc.ontrack = (event) => {
       const [remoteStream] = event.streams;
+      console.log("🎯 Got remote track:", remoteStream);
+      console.log("📹 Remote stream tracks:", remoteStream.getTracks());
+      // If remoteStream is null, we can't set it
       setRemoteStream(remoteStream);
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStream;
+        console.log("✅ Remote video attached");
+      } else {
+        console.warn("🚫 remoteVideoRef.current is NULL");
       }
       setIsConnected(true);
     };
@@ -261,7 +282,7 @@ export const PatientVideoConsultation = () => {
       title: "Session Ended",
       description: "The consultation session has been ended by the doctor.",
     });
-    cleanupAndExit();
+    cleanUpConnection();
   };
 
   // Start consultation
@@ -276,34 +297,44 @@ export const PatientVideoConsultation = () => {
 
   // Leave consultation
   const leaveConsultation = () => {
-    cleanupAndExit();
+    cleanUpConnection();
   };
 
-  const cleanupAndExit = () => {
-    // Stop local stream
+  const cleanUpConnection = () => {
+    console.log("🧹 Cleaning up connection...");
+  
+    // Stop local tracks
     if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+      localStream.getTracks().forEach((track) => track.stop());
     }
-
+  
+    // Stop remote stream tracks (optional, extra clean)
+    if (remoteStream) {
+      remoteStream.getTracks().forEach((track) => track.stop());
+    }
+  
     // Close peer connection
     if (peerConnectionRef.current) {
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onicecandidate = null;
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
-
-    // Leave room and disconnect socket
-    if (roomId && userId) {
-      socket.emit("leave-room", roomId, userId);
+  
+    // Reset video elements
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
     }
-
-    setIsConsultationActive(false);
-    setRemoteStream(null);
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+  
+    // Reset state
     setLocalStream(null);
+    setRemoteStream(null);
     setIsConnected(false);
-
-    // Navigate back to dashboard
-    navigate('/dashboard');
   };
+  
 
   // Toggle microphone
   const toggleMicrophone = () => {
