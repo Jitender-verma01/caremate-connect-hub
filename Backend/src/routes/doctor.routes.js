@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createDoctor, getDoctorById, updateDoctorProfile, toggleDoctorStatus, getDoctors, updateProfileImage, updateAvailableTimeSlots, getAvailableSlotsForDoctor, getDoctorsBySpecialization, getDoctorByUserId } from "../controllers/doctor.controller.js";
+import { createDoctor, getDoctorById, updateDoctorProfile, toggleDoctorStatus, getDoctors, updateProfileImage, updateAvailableTimeSlots, getAvailableSlotsForDoctor, getDoctorsBySpecialization, getDoctorByUserId, getPatientsForDoctor } from "../controllers/doctor.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
@@ -21,5 +21,8 @@ router.route("/profile/:doctorId").get(getDoctorById);
 router.route("/all-doctors").get(getDoctors);
 router.route("/specialization").get(getDoctorsBySpecialization);
 router.route("/available-slots-for-doctor/:doctorId").get(getAvailableSlotsForDoctor);
+
+router.get('/:doctorId/patients', getPatientsForDoctor);
+
 
 export default router;

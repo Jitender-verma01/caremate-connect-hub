@@ -1,6 +1,7 @@
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Doctor } from "../models/doctor.model.js";
+import { Appointment } from "../models/appointment.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
@@ -336,6 +337,35 @@ const getDoctors = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, doctors, "Doctors Found"));
 });
 
+const getPatientsForDoctor = asyncHandler(async (req, res) => {
+    const { doctorId } = req.params;
+  
+    if (!doctorId) {
+      throw new ApiError(400, "Doctor ID not found");
+    }
+  
+    // Get all appointments for this doctor
+    const appointments = await Appointment.find({ doctorId }).sort({ date: -1 }).populate({
+      path: "patientId", // or "patient" depending on your schema
+      populate: { path: "user_id", select: "-password -refreshToken" } // exclude stuff like password
+    });
+  
+    // Extract unique patients from the appointments
+    const uniquePatientsMap = new Map();
+  
+    appointments.forEach(app => {
+      const patient = app.patientId;
+      if (patient && !uniquePatientsMap.has(patient._id.toString())) {
+        uniquePatientsMap.set(patient._id.toString(), patient);
+      }
+    });
+  
+    const uniquePatients = Array.from(uniquePatientsMap.values());
+  
+    return res.status(200).json(new ApiResponse(200, uniquePatients, "Patients fetched successfully"));
+  });
+  
+
 
 
 
@@ -349,5 +379,6 @@ export {
     getDoctorByUserId,
     updateProfileImage,
     getDoctorsBySpecialization,
-    getAvailableSlotsForDoctor
+    getAvailableSlotsForDoctor,
+    getPatientsForDoctor
 }

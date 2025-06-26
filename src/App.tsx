@@ -26,6 +26,7 @@ import AuthLayout from "./layouts/AuthLayout";
 // Context providers
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import Appointments from "./pages/Appointments";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/doctors/:id" element={<DoctorProfile />} />
                 <Route path="/book-appointment/:doctorId" element={<BookAppointment />} />
                 <Route path="/prescriptions" element={<Prescriptions />} />
+                <Route path="/appointments" element={<Appointments />} />
                 <Route path="/aiassistance" element={<AIAssistance />} />
                 <Route path="/consultation/:appointmentId" element={<VideoConsultation />} />
               </Route>

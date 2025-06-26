@@ -15,7 +15,7 @@ interface ChatMessage {
 }
 
 const initialChat: ChatMessage[] = [
-  { role: "assistant", content: "Hello! I'm your AI medical assistant powered by GPT-3.5. How can I help you today?" }
+  { role: "assistant", content: "Hello! I'm your AI medical assistant. How can I help you today?" }
 ];
 
 const AIAssistance = () => {
@@ -93,7 +93,7 @@ const AIAssistance = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center">
               <Bot className="mr-2 h-5 w-5" /> 
-              AI Assistant (Powered by GPT-3.5)
+              AI Assistant
             </CardTitle>
             <CardDescription>
               Describe your symptoms or ask health-related questions

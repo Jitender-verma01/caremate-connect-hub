@@ -26,6 +26,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import DoctorPrescriptions from "./DoctorPrescriptions";
+import { useDoctor } from "@/hooks/useDoctors";
 
 const Prescriptions = () => {
   const { user } = useAuth();

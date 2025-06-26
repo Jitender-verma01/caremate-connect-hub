@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mic, MicOff, Video, VideoOff, Phone, PlayCircle } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, Phone, PlayCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { socket } from "@/lib/socket";
 import { useAppointment } from "@/hooks/useAppointments";
@@ -316,40 +316,41 @@ export const PatientVideoConsultation = () => {
   };
 
   const cleanUpConnection = () => {
-    console.log("🧹 Cleaning up connection...");
+    console.log("🧹 Cleaning up call...");
   
-    // Stop local tracks
+    // ⛔ Stop local cam/mic
     if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop());
+      localStream.getTracks().forEach((track) => {
+        track.stop();
+        console.log("🛑 Stopped local track:", track.kind);
+      });
     }
   
-    // Stop remote stream tracks (optional, extra clean)
+    // ⛔ Stop remote stream (optional but clean)
     if (remoteStream) {
-      remoteStream.getTracks().forEach((track) => track.stop());
+      remoteStream.getTracks().forEach((track) => {
+        track.stop();
+        console.log("🛑 Stopped remote track:", track.kind);
+      });
     }
   
-    // Close peer connection
+    // 🔌 Close peer connection
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.ontrack = null;
-      peerConnectionRef.current.onicecandidate = null;
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
   
-    // Reset video elements
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = null;
-    }
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = null;
-    }
+    // 🎥 Reset video refs
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
   
-    // Reset state
+    // 🧼 Clear state
     setLocalStream(null);
     setRemoteStream(null);
     setIsConnected(false);
     navigate("/dashboard");
   };
+  
   
 
   // Toggle microphone
@@ -376,8 +377,9 @@ export const PatientVideoConsultation = () => {
 
   if (isLoading || !appointment) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div>Loading appointment...</div>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading Appointment...</span>
       </div>
     );
   }

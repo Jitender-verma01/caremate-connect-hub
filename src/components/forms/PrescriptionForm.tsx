@@ -33,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface PrescriptionFormProps {
   patientId: string;
   patientName: string;
+  doctorId: string;
   onSuccess?: () => void;
 }
 
@@ -42,8 +43,7 @@ interface PrescriptionFormData {
   instructions: string;
 }
 
-export const PrescriptionForm = ({ patientId, patientName, onSuccess }: PrescriptionFormProps) => {
-  const { user } = useAuth();
+export const PrescriptionForm = ({ patientId, patientName, doctorId, onSuccess }: PrescriptionFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -56,7 +56,7 @@ export const PrescriptionForm = ({ patientId, patientName, onSuccess }: Prescrip
   });
 
   const onSubmit = async (data: PrescriptionFormData) => {
-    if (!user?.id) {
+    if (!doctorId) {
       toast.error("Doctor not found");
       return;
     }
@@ -64,7 +64,7 @@ export const PrescriptionForm = ({ patientId, patientName, onSuccess }: Prescrip
     setIsSubmitting(true);
     try {
       await api.prescriptions.create({
-        doctorId: user.id,
+        doctorId,
         patientId,
         ...data,
       });

@@ -4,6 +4,7 @@ import { DoctorVideoConsultation } from "@/components/consultation/DoctorVideoCo
 import { PatientVideoConsultation } from "@/components/consultation/PatientVideoConsultation";
 import { useAppointment } from "@/hooks/useAppointments";
 import { useParams } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
@@ -33,8 +34,9 @@ const VideoConsultation = () => {
 
   if (!appointment || !user) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div>Appointment not found or unauthorized access</div>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading Appointment...</span>
       </div>
     );
   }
@@ -49,7 +51,7 @@ const VideoConsultation = () => {
   console.log('Is Doctor:', isDoctor);
 
   if (isDoctor) {
-    return <DoctorVideoConsultation />;
+    return <DoctorVideoConsultation PatientUserId={appointment.patientId?.user_id?._id} />;
   } else {
     return <PatientVideoConsultation />;
   }

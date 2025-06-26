@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, VideoIcon } from 'lucide-react';
+import { Calendar, Clock, User, VideoIcon, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
@@ -29,7 +29,12 @@ export function AppointmentManagement() {
   const updateStatus = useUpdateAppointmentStatus();
   
   if (isLoading) {
-    return <div>Loading appointments...</div>;
+     return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading Appointment...</span>
+      </div>
+    );
   }
   
   if (error) {

@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,24 +20,42 @@ import { Search, FileText, Clock, CheckCircle } from "lucide-react";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-
+import { useDoctor } from "@/hooks/useDoctors";
+import { getAgeFromDOB } from "@/lib/utils";
+import { PatientPrescriptionsList } from "@/components/patient/PatientPrescriptionsList";
 const DoctorPrescriptions = () => {
+
   const { user } = useAuth();
+
+  const { data: doctorInfo, isLoading: doctorLoading } = useQuery({
+    queryKey: ['doctor', user?.id],
+    queryFn: () => api.doctors.getProfile().then(res => res.data),
+    enabled: !!user?.id,
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
   // This would need to be implemented - getting patients for a doctor
   const { data: patients = [], isLoading: patientsLoading } = useQuery({
-    queryKey: ['doctor-patients', user?.id],
+    queryKey: ['doctor-patients', doctorInfo?._id],
     queryFn: async () => {
       // For now, return empty array - this would need proper implementation
-      return [];
+      if (!user?.id) throw new Error('User not found');
+      
+      try {
+        const response = await api.doctors.getPatientsForDoctor(doctorInfo?._id);
+        return response.data || [];
+      } catch (err) {
+        console.error('Error fetching patient:', err);
+        return [];
+      }
     },
     enabled: !!user?.id
   });
 
   const filteredPatients = patients.filter((patient: any) => 
-    patient.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    patient?.user_id?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (patientsLoading) {
@@ -104,23 +124,37 @@ const DoctorPrescriptions = () => {
                 ) : (
                   filteredPatients.map((patient: any) => (
                     <Card 
-                      key={patient.id} 
+                      key={patient._id} 
                       className={`cursor-pointer transition-colors ${
-                        selectedPatient?.id === patient.id ? 'ring-2 ring-primary' : 'hover:bg-muted/50'
+                        selectedPatient?.id === patient._id ? 'ring-2 ring-primary' : 'hover:bg-muted/50'
                       }`}
                       onClick={() => setSelectedPatient(patient)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">{patient.name}</h4>
-                            <p className="text-sm text-muted-foreground">{patient.email}</p>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                            {/* Avatar */}
+                            <Avatar>
+                              <AvatarImage src={patient.profileImage || ""} alt={patient.user_id.name} />
+                              <AvatarFallback>
+                                {patient.user_id.name?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            {/* Name + Email */}
+                            <div>
+                              <h4 className="font-medium">{patient.user_id.name}</h4>
+                              <p className="text-sm text-muted-foreground">{patient.user_id.email}</p>
+                            </div>
                           </div>
+
+                          {/* Age Badge */}
                           <Badge variant="outline">
-                            {patient.age} years
+                            {patient.date_of_birth ? `${getAgeFromDOB(patient.date_of_birth)} years` : "Age N/A"}
                           </Badge>
                         </div>
                       </CardContent>
+
                     </Card>
                   ))
                 )}
@@ -145,6 +179,7 @@ const DoctorPrescriptions = () => {
               <PrescriptionForm
                 patientId={selectedPatient.id}
                 patientName={selectedPatient.name}
+                doctorId={doctorInfo?._id || ''} // Providing a default empty string
                 onSuccess={() => {
                   // Optionally refresh data or show success message
                 }}
@@ -158,6 +193,7 @@ const DoctorPrescriptions = () => {
               </div>
             )}
           </CardContent>
+          <PatientPrescriptionsList patientId={selectedPatient?.user_id._id || ""} />
         </Card>
       </div>
     </div>
