@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "https://caremate-connect-hub.onrender.com/api/v1";
 // https://caremate-connect-hub.onrender.com
 // Common headers for API requests
 const defaultHeaders: Record<string, string> = {
@@ -135,7 +135,7 @@ export const api = {
   
     getPatientsForDoctor: (id: string) => 
       apiRequest(`/doctor/${id}/patients`),
-      
+
     createDoctor: (formData: FormData) => 
       apiRequest("/doctor/create", "POST", formData),
     
