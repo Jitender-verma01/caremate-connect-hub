@@ -333,6 +333,7 @@ export const PatientVideoConsultation = () => {
     setLocalStream(null);
     setRemoteStream(null);
     setIsConnected(false);
+    navigate("/dashboard");
   };
   
 

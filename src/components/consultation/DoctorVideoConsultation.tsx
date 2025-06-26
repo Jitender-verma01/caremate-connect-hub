@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mic, MicOff, Video, VideoOff, Phone, FileText, PlayCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PrescriptionForm } from "../forms/PrescriptionForm";
 import { socket } from "@/lib/socket";
 import { useAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +25,7 @@ export const DoctorVideoConsultation = () => {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   // Refs
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -453,10 +455,19 @@ export const DoctorVideoConsultation = () => {
                       End Session
                     </Button>
                     
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => setShowForm(true)}>
                       <FileText className="h-5 w-5 mr-2" />
                       Create Prescription
                     </Button>
+                    {showForm && (
+                      <PrescriptionForm
+                        patientId={appointment.patientId}
+                        patientName={patientName}
+                        onSuccess={() => {
+                          setShowForm(false);
+                        }}
+                      />
+                    )}
                   </div>
                 </>
               ) : (
