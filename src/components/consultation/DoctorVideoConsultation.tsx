@@ -230,25 +230,40 @@ export const DoctorVideoConsultation = () => {
   };
 
   const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
-    console.log("Received answer");
-    if (peerConnectionRef.current) {
-      try {
-        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-        console.log("Draining buffered ICE candidates...");
-        for (const candidate of pendingCandidates.current) {
-          try {
-            await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log("Buffered ICE candidate added");
-          } catch (err) {
-            console.error("Failed to add buffered candidate:", err);
-          }
-        }
-        pendingCandidates.current = []; // Clean the queue
-      } catch (error) {
-        console.error("Error handling answer:", error);
+    console.log("📩 Received answer");
+  
+    if (!peerConnectionRef.current) {
+      console.warn("❌ Peer connection missing");
+      return;
+    }
+  
+    const pc = peerConnectionRef.current;
+  
+    try {
+      // Prevent duplicate setting of remote description
+      if (pc.signalingState !== "stable") {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        console.log("✅ Remote description set from answer");
+      } else {
+        console.warn("⚠️ Remote description already set. Skipping.");
       }
+  
+      // Apply any buffered ICE
+      console.log("🧊 Draining buffered ICE candidates...");
+      for (const candidate of pendingCandidates.current) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log("✅ Buffered ICE candidate added");
+        } catch (err) {
+          console.error("❌ Failed to add ICE candidate:", err);
+        }
+      }
+      pendingCandidates.current = [];
+    } catch (error) {
+      console.error("❌ Error handling answer:", error);
     }
   };
+  
 
   const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
     console.log("Received ICE candidate");
