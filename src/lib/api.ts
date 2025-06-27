@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 
 // Update with your actual backend API URL
-const API_BASE_URL = "https://caremate-connect-hub.onrender.com/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
 // https://caremate-connect-hub.onrender.com
 // Common headers for API requests
 const defaultHeaders: Record<string, string> = {
@@ -77,6 +77,18 @@ export const apiRequest = async (
     throw error;
   }
 };
+
+const createStripeSession = (data: {
+  doctorId: string;
+  date: string;
+  time: string;
+  consultationType: string;
+  reason: string;
+  userId: string;
+  doctorName: string;
+  price: number;
+}) => apiRequest("/payment/create-checkout-session", "POST", data);
+
 
 // API service with methods for different resources
 export const api = {
@@ -223,6 +235,11 @@ export const api = {
     
     delete: (id: string) => 
       apiRequest(`/prescription/delete-prescription/${id}`, "DELETE")
+  },
+
+  //Payment
+  payment: {
+    createStripeSession,
   },
   
   // OpenAI API

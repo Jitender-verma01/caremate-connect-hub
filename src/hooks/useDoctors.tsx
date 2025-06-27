@@ -86,7 +86,7 @@ export const useDoctors = (params: GetDoctorsParams = {}) => {
           // Transform API response to match our frontend format
           return (Array.isArray(response.data) ? response.data : [response.data]).map((doctor: any) => {
             // Log the full doctor object for debugging
-            console.log("Processing doctor:", JSON.stringify(doctor, null, 2));
+            // console.log("Processing doctor:", JSON.stringify(doctor, null, 2));
             
             // Check if user_id is null or undefined
             let doctorName = "Unknown Doctor";

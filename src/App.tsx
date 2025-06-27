@@ -18,6 +18,7 @@ import Prescriptions from "./pages/Prescriptions";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
 import AIAssistance from "./pages/AIAssistance";
+import { Navigate } from "react-router-dom";
 
 // Layout components
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -27,8 +28,11 @@ import AuthLayout from "./layouts/AuthLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import Appointments from "./pages/Appointments";
+import Success from "./pages/Success";
 
 const queryClient = new QueryClient();
+
+const user = localStorage.getItem("caremate_auth_token") || null;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -58,6 +62,7 @@ const App = () => (
                 <Route path="/prescriptions" element={<Prescriptions />} />
                 <Route path="/appointments" element={<Appointments />} />
                 <Route path="/aiassistance" element={<AIAssistance />} />
+                <Route path="/success" element={<Success />} />
                 <Route path="/consultation/:appointmentId" element={<VideoConsultation />} />
               </Route>
               

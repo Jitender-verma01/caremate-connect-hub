@@ -16,6 +16,8 @@ import { useBookAppointment } from "@/hooks/useAppointments";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { loadStripe } from "@stripe/stripe-js";
+import { api } from "@/lib/api";
 
 const BookAppointment = () => {
   const { doctorId } = useParams<{ doctorId: string }>();
@@ -48,31 +50,35 @@ const BookAppointment = () => {
   useEffect(() => {
     setSelectedTime(null);
   }, [selectedDate]);
+
+  const stripePromise = loadStripe("pk_test_51RebVg4GOBL5hL6HHlzPtJnoLdTHDq7nIXi4KKfjvVqTXAmcn9K4E7W0deizgUC105RNvegNUw2CLhQyxKur6kxv00mQJdNfVH");
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!doctorId || !selectedDate || !selectedTime || !user) {
       toast.error("Please complete all required fields");
       return;
     }
+  
+    try {
 
-    bookAppointment.mutate({
-      doctorId: doctorId,
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      time: selectedTime,
-      consultationType: consultationType,
-      reason: reason
-    }, {
-      onSuccess: (data) => {
-        // Create notification for booking success
-        addNotification({
-          userId: user.id,
-          message: `Appointment booked successfully with Dr. ${doctor?.name} on ${format(selectedDate, 'MMMM d')} at ${selectedTime}`,
-          type: "appointment"
-        });
-        
-        navigate("/dashboard");
-      }
-    });
+      const session = await api.payment.createStripeSession({
+        doctorId,
+        date: format(selectedDate, "yyyy-MM-dd"),
+        time: selectedTime,
+        consultationType,
+        reason,
+        userId: user.id,
+        doctorName: doctor?.name,
+        price: doctor?.fee || 500,
+      });
+      
+      const stripe = await stripePromise;
+  
+      await stripe?.redirectToCheckout({ sessionId: session.id });
+    } catch (err) {
+      toast.error("Payment failed. Try again.");
+      console.error("Stripe error", err);
+    }
   };
 
   if (isLoadingDoctor) {

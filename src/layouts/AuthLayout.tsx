@@ -3,8 +3,11 @@ import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AuthLayout = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
   // Redirect to dashboard if already logged in
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;

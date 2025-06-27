@@ -40,7 +40,7 @@ import appointmentRouter from "./routes/appointment.routes.js"
 import prescriptionRouter from "./routes/prescription.routes.js"
 import medicalRecordsRouter from "./routes/medicalRecords.routes.js"
 import healthcheckRouter from "./routes/healthcheck.routes.js"
-
+import stripe from "./paymentGateway/stripe.js";
 
 //routes declaration
 app.use("/api/v1/user", userRouter)
@@ -50,6 +50,7 @@ app.use("/api/v1/appointment", appointmentRouter)
 app.use("/api/v1/prescription", prescriptionRouter)
 app.use("/api/v1/medicalRecords", medicalRecordsRouter)
 app.use("/api/v1/healthcheck", healthcheckRouter)
+app.use("/api/v1/payment", stripe)
 
 //middleware for sending error as json response
 app.use((err, req, res, next) => {
