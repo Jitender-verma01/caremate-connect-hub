@@ -151,26 +151,26 @@ const BookAppointment = () => {
                 <div className="text-center py-4">Loading available times...</div>
               ) : availability && Array.isArray(availability) && availability.length > 0 ? (
                 <div className="space-y-4">
-                  {availability.map((slot, index) => (
-                    <div key={index} className="space-y-2">
-                      <h3 className="font-medium capitalize">{slot.day}</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {slot.times && Array.isArray(slot.times) && slot.times
-                          .filter(timeSlot => timeSlot.status === "available")
-                          .map((timeSlot, timeIndex) => (
-                            <Button
-                              key={timeIndex}
-                              variant={selectedTime === timeSlot.time ? "default" : "outline"}
-                              className="w-20"
-                              onClick={() => setSelectedTime(timeSlot.time)}
-                            >
-                              {timeSlot.time}
-                            </Button>
-                          ))
-                        }
-                      </div>
-                    </div>
-                  ))}
+                  {availability && availability.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {availability[0].times
+                      .filter((timeSlot) => timeSlot.status === "available")
+                      .map((timeSlot, index) => (
+                        <Button
+                          key={index}
+                          variant={selectedTime === timeSlot.time ? "default" : "outline"}
+                          className="w-20"
+                          onClick={() => setSelectedTime(timeSlot.time)}
+                        >
+                          {timeSlot.time}
+                        </Button>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No available slots for the selected date. Please try another date.
+                  </div>
+                )}
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
