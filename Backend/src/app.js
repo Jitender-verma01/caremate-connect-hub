@@ -10,7 +10,8 @@ const allowedOrigins = [
   "https://d7f9259f-d9b3-4e4a-ad41-f123ef935886.lovableproject.com",
   "https://id-preview--d7f9259f-d9b3-4e4a-ad41-f123ef935886.lovable.app",
   "http://localhost:8080",
-  "https://caremate-gules.vercel.app"
+  "https://caremate-gules.vercel.app",
+  "https://care-mate-bice.vercel.app"
 ];
 
 app.use(cors({
